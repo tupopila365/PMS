@@ -1,0 +1,14 @@
+import { mockRisks } from '../mocks/data'
+import type { RiskLevel } from '../types'
+
+const SEVERITY_ORDER: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 }
+
+export function getProjectRiskLevelFromRisks(projectId: string, fallback?: RiskLevel): RiskLevel {
+  const openRisks = mockRisks.filter((r) => r.projectId === projectId && r.status !== 'closed')
+  if (openRisks.length === 0) return fallback || 'low'
+  const worst = openRisks.reduce((a, b) =>
+    SEVERITY_ORDER[b.severity] > SEVERITY_ORDER[a.severity] ? b : a
+  )
+  const map: Record<string, RiskLevel> = { low: 'low', medium: 'medium', high: 'high', critical: 'high' }
+  return map[worst.severity] || fallback || 'low'
+}

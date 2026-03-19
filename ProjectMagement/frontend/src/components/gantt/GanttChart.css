@@ -1,0 +1,187 @@
+/* Gantt chart - refactored for size and ease on the eyes */
+.gantt-chart-wrapper {
+  --gantt-border: var(--border);
+  --gantt-bg: var(--surface);
+  --gantt-bg-alt: var(--surface-muted);
+  --gantt-text: var(--text-primary);
+  --gantt-text-muted: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--gantt-bg);
+  border: 1px solid var(--gantt-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Toolbar - view mode switcher */
+.gantt-chart-toolbar {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--gantt-border);
+  background: var(--gantt-bg-alt);
+  flex-shrink: 0;
+}
+
+.gantt-chart-toolbar .ant-segmented {
+  background: var(--gantt-bg) !important;
+}
+
+.gantt-chart-toolbar .ant-segmented-item {
+  color: var(--gantt-text-muted) !important;
+}
+
+.gantt-chart-toolbar .ant-segmented-item-selected {
+  color: var(--color-primary) !important;
+  background: rgba(37, 99, 235, 0.1) !important;
+}
+
+.gantt-chart-toolbar .ant-segmented-item:hover {
+  color: var(--gantt-text) !important;
+}
+
+/* Main chart area - fills remaining space */
+.gantt-chart-inner {
+  flex: 1;
+  min-height: min(480px, calc(100vh - 320px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gantt-bg);
+}
+
+.gantt-chart-inner > div {
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--gantt-bg-alt);
+}
+
+/* Scrollbar - modern, subtle */
+.gantt-chart-inner > div::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.gantt-chart-inner > div::-webkit-scrollbar-track {
+  background: var(--gantt-bg-alt);
+}
+
+.gantt-chart-inner > div::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+.gantt-chart-inner > div::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Task list - theme-aware, generous spacing */
+.gantt-chart-inner ._34SS0 {
+  background-color: var(--gantt-bg) !important;
+  color: var(--gantt-text) !important;
+}
+
+.gantt-chart-inner ._34SS0:nth-of-type(even) {
+  background-color: var(--gantt-bg-alt) !important;
+  color: var(--gantt-text) !important;
+}
+
+.gantt-chart-inner ._3lLk3 {
+  color: var(--gantt-text) !important;
+  font-size: 13px !important;
+  padding: 0 16px !important;
+}
+
+.gantt-chart-inner ._3ZbQT {
+  background: var(--gantt-bg) !important;
+  border-color: var(--gantt-border) !important;
+}
+
+.gantt-chart-inner ._3_ygE {
+  background: var(--gantt-bg-alt) !important;
+  border-color: var(--gantt-border) !important;
+}
+
+.gantt-chart-inner ._WuQ0f {
+  color: var(--gantt-text-muted) !important;
+  padding: 0 16px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.gantt-chart-inner ._2QjE6,
+.gantt-chart-inner ._2TfEi {
+  color: var(--gantt-text-muted) !important;
+  font-size: 11px !important;
+}
+
+/* Timeline grid - soft, theme-consistent */
+.gantt-chart-inner [fill="#f5f5f5"],
+.gantt-chart-inner [fill="#fff"],
+.gantt-chart-inner [fill="#ffffff"] {
+  fill: var(--gantt-bg) !important;
+}
+
+.gantt-chart-inner [fill="#f5f5f5"]:nth-of-type(even),
+.gantt-chart-inner rect[fill="#f5f5f5"] {
+  fill: var(--gantt-bg-alt) !important;
+}
+
+.gantt-chart-inner [stroke="#ebeff2"],
+.gantt-chart-inner [stroke="#e6e4e4"],
+.gantt-chart-inner [stroke="#e0e0e0"] {
+  stroke: var(--gantt-border) !important;
+}
+
+.gantt-chart-inner [fill="#333"] {
+  fill: var(--gantt-text) !important;
+}
+
+.gantt-chart-inner [fill="#555"],
+.gantt-chart-inner [fill="#666"] {
+  fill: var(--gantt-text-muted) !important;
+}
+
+.gantt-chart-inner [style*="background: #fff"],
+.gantt-chart-inner [style*="background:#fff"] {
+  background: var(--gantt-bg) !important;
+}
+
+.gantt-chart-inner [style*="color: #666"],
+.gantt-chart-inner [style*="color:#666"],
+.gantt-chart-inner [style*="color: rgb(86"],
+.gantt-chart-inner [style*="color:rgb(86"] {
+  color: var(--gantt-text-muted) !important;
+}
+
+.gantt-chart-inner table {
+  border-color: var(--gantt-border) !important;
+}
+
+.gantt-chart-inner [style*="border"] {
+  border-color: var(--gantt-border) !important;
+}
+
+.gantt-chart-inner thead th {
+  background: var(--gantt-bg-alt) !important;
+  font-weight: 600 !important;
+  color: var(--gantt-text) !important;
+  font-size: 13px !important;
+}
+
+.gantt-chart-inner tbody td:first-child {
+  font-weight: 500;
+  color: var(--gantt-text);
+}
+
+/* Tooltip */
+.gantt-chart-inner [class*="tooltip"] {
+  background: var(--surface-elevated) !important;
+  color: var(--gantt-text) !important;
+  border: 1px solid var(--gantt-border);
+  box-shadow: var(--shadow-md);
+}
