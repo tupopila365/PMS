@@ -58,10 +58,10 @@ export function PortfolioAnalytics() {
     <Card
       title="Portfolio Analytics"
       styles={{
-        header: { borderBottom: '1px solid #f1f5f9', background: '#f8fafc' },
+        header: { borderBottom: '1px solid var(--border)', background: 'var(--surface-muted)' },
         body: { padding: '20px 24px' },
       }}
-      style={{ borderRadius: 12, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.06)' }}
+      style={{ borderRadius: 12, boxShadow: 'var(--shadow-md)' }}
     >
       <div style={{ marginBottom: 24 }}>
         <h4 style={{ marginBottom: 12 }}>Projects by Type</h4>

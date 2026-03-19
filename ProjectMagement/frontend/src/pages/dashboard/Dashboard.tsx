@@ -22,7 +22,7 @@ export function Dashboard() {
     <div>
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ marginBottom: 4 }}>Dashboard</h2>
-        <p style={{ color: '#666', margin: 0 }}>Your overview at a glance.</p>
+        <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Your overview at a glance.</p>
       </div>
 
       <Row gutter={[16, 16]}>

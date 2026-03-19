@@ -23,6 +23,7 @@ import {
   WarningOutlined,
   SunOutlined,
   MoonOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '../../context/AuthContext'
 import { usePermissions } from '../../hooks/usePermissions'
@@ -56,6 +57,7 @@ function buildMenuItems(can: (p: import('../../utils/permissions').Permission) =
   }
   if (can('risks:view')) items.push({ key: '/risks', icon: <WarningOutlined />, label: 'Risks' })
   if (can('changes:view')) items.push({ key: '/changes', icon: <FileTextOutlined />, label: 'Change Log' })
+  if (can('timesheets:view')) items.push({ key: '/timesheets', icon: <ClockCircleOutlined />, label: 'Timesheets' })
   if (can('media:view')) items.push({ key: '/media', icon: <PictureOutlined />, label: 'Media' })
   if (can('documents:view')) items.push({ key: '/documents', icon: <FileOutlined />, label: 'Documents' })
   if (can('finance:view')) {
@@ -66,7 +68,6 @@ function buildMenuItems(can: (p: import('../../utils/permissions').Permission) =
       children: [
         ...(can('finance:invoices') ? [{ key: '/finance/invoices', label: 'Invoices' }] : []),
         ...(can('finance:payments') ? [{ key: '/finance/payments', label: 'Payments' }] : []),
-        ...(can('timesheets:view') ? [{ key: '/timesheets', label: 'Timesheets' }] : []),
       ].filter(Boolean) as { key: string; label: string }[],
     })
   }

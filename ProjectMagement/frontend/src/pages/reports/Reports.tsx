@@ -68,7 +68,14 @@ export function Reports() {
       <PageHeader title="Reports & Analytics" subtitle="Project and budget analytics." />
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card title="Completion by Project Type" styles={{ header: { borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }, body: { padding: '20px 24px' } }} style={{ borderRadius: 12, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.06)' }}>
+          <Card
+            title="Completion by Project Type"
+            styles={{
+              header: { borderBottom: '1px solid var(--border)', background: 'var(--surface-muted)' },
+              body: { padding: '20px 24px' },
+            }}
+            style={{ borderRadius: 12, boxShadow: 'var(--shadow-md)' }}
+          >
             <ResponsiveContainer width="100%" height={320}>
               <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                 <defs>
@@ -109,7 +116,7 @@ export function Reports() {
                   verticalAlign="bottom"
                   layout="vertical"
                   align="center"
-                  wrapperStyle={{ paddingTop: 12, width: '100%' }}
+                  wrapperStyle={{ paddingTop: 12, width: '100%', color: 'var(--text-primary)' }}
                   formatter={(value) => {
                     const row = completionData.find((d) => d.name === value)
                     return row ? `${row.name}: ${row.value}%` : value
@@ -120,7 +127,14 @@ export function Reports() {
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="Budget Overview" styles={{ header: { borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }, body: { padding: '20px 24px' } }} style={{ borderRadius: 12, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.06)' }}>
+          <Card
+            title="Budget Overview"
+            styles={{
+              header: { borderBottom: '1px solid var(--border)', background: 'var(--surface-muted)' },
+              body: { padding: '20px 24px' },
+            }}
+            style={{ borderRadius: 12, boxShadow: 'var(--shadow-md)' }}
+          >
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={budgetData}>
                 <defs>
@@ -129,18 +143,34 @@ export function Reports() {
                     <stop offset="100%" stopColor="#2563eb" />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(v: number) => `$${Number(v).toLocaleString()}`} contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08)' }} />
-                <Legend />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                <Tooltip
+                  formatter={(v: number) => `$${Number(v).toLocaleString()}`}
+                  contentStyle={{
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    boxShadow: 'var(--shadow-md)',
+                    background: 'var(--surface-elevated)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+                <Legend wrapperStyle={{ color: 'var(--text-primary)' }} />
                 <Bar dataKey="value" fill="url(#barGradient)" name="Amount" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Card>
         </Col>
         <Col xs={24}>
-          <Card title="Milestone Report" styles={{ header: { borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }, body: { padding: '20px 24px' } }} style={{ borderRadius: 12, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.06)' }}>
+          <Card
+            title="Milestone Report"
+            styles={{
+              header: { borderBottom: '1px solid var(--border)', background: 'var(--surface-muted)' },
+              body: { padding: '20px 24px' },
+            }}
+            style={{ borderRadius: 12, boxShadow: 'var(--shadow-md)' }}
+          >
             <Table
               dataSource={milestones}
               rowKey="id"

@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, Button, Table, InputNumber } from 'antd'
+import { Card, Button, Table, Input, InputNumber } from 'antd'
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { costBenefitService } from '../../services/costBenefitService'
@@ -75,7 +75,22 @@ export function ProjectCostBenefit() {
           rowKey={(_, i) => `c-${i}`}
           pagination={false}
           columns={[
-            { title: 'Description', dataIndex: 'description', key: 'description', render: (_, __, i) => <input value={costs[i]?.description} onChange={(e) => { const c = [...costs]; c[i] = { ...c[i], description: e.target.value }; setCosts(c); }} style={{ width: '100%', border: 'none', borderBottom: '1px solid #d9d9d9' }} /> },
+            {
+              title: 'Description',
+              dataIndex: 'description',
+              key: 'description',
+              render: (_, __, i) => (
+                <Input
+                  value={costs[i]?.description}
+                  onChange={(e) => {
+                    const c = [...costs]
+                    c[i] = { ...c[i], description: e.target.value }
+                    setCosts(c)
+                  }}
+                  style={{ width: '100%' }}
+                />
+              ),
+            },
             { title: 'Amount', dataIndex: 'amount', key: 'amount', width: 120, render: (_, __, i) => <InputNumber value={costs[i]?.amount} onChange={(v) => { const c = [...costs]; c[i] = { ...c[i], amount: v ?? 0 }; setCosts(c); }} style={{ width: '100%' }} prefix="$" /> },
           ]}
         />
@@ -88,7 +103,22 @@ export function ProjectCostBenefit() {
           rowKey={(_, i) => `b-${i}`}
           pagination={false}
           columns={[
-            { title: 'Description', dataIndex: 'description', key: 'description', render: (_, __, i) => <input value={benefits[i]?.description} onChange={(e) => { const b = [...benefits]; b[i] = { ...b[i], description: e.target.value }; setBenefits(b); }} style={{ width: '100%', border: 'none', borderBottom: '1px solid #d9d9d9' }} /> },
+            {
+              title: 'Description',
+              dataIndex: 'description',
+              key: 'description',
+              render: (_, __, i) => (
+                <Input
+                  value={benefits[i]?.description}
+                  onChange={(e) => {
+                    const b = [...benefits]
+                    b[i] = { ...b[i], description: e.target.value }
+                    setBenefits(b)
+                  }}
+                  style={{ width: '100%' }}
+                />
+              ),
+            },
             { title: 'Amount', dataIndex: 'amount', key: 'amount', width: 120, render: (_, __, i) => <InputNumber value={benefits[i]?.amount} onChange={(v) => { const b = [...benefits]; b[i] = { ...b[i], amount: v ?? 0 }; setBenefits(b); }} style={{ width: '100%' }} prefix="$" /> },
           ]}
         />
