@@ -1,34 +1,48 @@
 package com.cbmp.auth;
 
+import com.cbmp.org.UserEntity;
+import com.cbmp.org.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    private static final Map<String, UserData> USERS = Map.of(
-            "admin@cbmp.com", new UserData("1", "Admin User", "admin", "1"),
-            "pm@cbmp.com", new UserData("2", "Project Manager", "project_manager", "1")
-    );
-
-    public AuthController(JwtUtil jwtUtil) {
+    public AuthController(JwtUtil jwtUtil, UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        var user = USERS.get(request.email());
-        if (user == null || !"password".equals(request.password())) {
+        if (request.email() == null || request.password() == null) {
             return ResponseEntity.status(401).build();
         }
-        String token = jwtUtil.generateToken(user.id(), user.name(), request.email(), user.role(), user.companyId());
-        return ResponseEntity.ok(new LoginResponse(token, new UserDto(user.id(), user.name(), request.email(), user.role(), user.companyId())));
+        String emailNorm = request.email().trim().toLowerCase();
+        UserEntity u = userRepository.findByEmailIgnoreCase(emailNorm).orElse(null);
+        if (u == null) {
+            return ResponseEntity.status(401).build();
+        }
+        String hash = u.getPasswordHash();
+        boolean ok;
+        if (hash == null || hash.isEmpty()) {
+            ok = "password".equals(request.password());
+        } else {
+            ok = passwordEncoder.matches(request.password(), hash);
+        }
+        if (!ok) {
+            return ResponseEntity.status(401).build();
+        }
+        String token = jwtUtil.generateToken(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getCompanyId());
+        return ResponseEntity.ok(new LoginResponse(token, new UserDto(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getCompanyId())));
     }
 
     @GetMapping("/me")
@@ -40,5 +54,4 @@ public class AuthController {
     record LoginRequest(String email, String password) {}
     record LoginResponse(String token, UserDto user) {}
     record UserDto(String id, String name, String email, String role, String companyId) {}
-    record UserData(String id, String name, String role, String companyId) {}
 }

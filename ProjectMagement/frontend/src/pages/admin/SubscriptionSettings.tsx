@@ -5,8 +5,8 @@ import { companyService } from '../../services/companyService'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { PageLoader } from '../../components/ui/PageLoader'
 import { projectService } from '../../services/projectService'
+import { userService } from '../../services/userService'
 import { useAuth } from '../../context/AuthContext'
-import { mockUsers } from '../../mocks/data'
 import type { PlanTier } from '../../types'
 
 const PLAN_LABELS: Record<PlanTier, string> = {
@@ -44,9 +44,15 @@ export function SubscriptionSettings() {
     queryFn: projectService.getProjects,
   })
 
+  const { data: companyUsers = [] } = useQuery({
+    queryKey: ['users', companyId],
+    queryFn: () => userService.getUsers(companyId),
+    enabled: !!companyId,
+  })
+
   const isLoading = companyLoading || subLoading
 
-  const userCount = mockUsers.filter((u) => u.companyId === companyId).length
+  const userCount = companyUsers.length
   const projectCount = projects.filter((p) => p.companyId === companyId).length
 
   if (isLoading) {

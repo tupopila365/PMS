@@ -7,14 +7,8 @@ import { projectService } from '../../services/projectService'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { usePermissions } from '../../hooks/usePermissions'
-import type { Project, ProjectType, RiskLevel } from '../../types'
-
-const typeColors: Record<ProjectType, string> = {
-  construction: 'blue',
-  roads: 'green',
-  railway: 'orange',
-  buildings: 'purple',
-}
+import type { Project, RiskLevel } from '../../types'
+import { formatProjectTypeLabel, tagColorForProjectType } from '../../utils/projectType'
 
 const riskColors: Record<RiskLevel, string> = {
   low: 'green',
@@ -49,10 +43,11 @@ export function ProjectList() {
 
   const regions = useMemo(() => [...new Set(projects?.map((p) => p.region).filter(Boolean))] as string[], [projects])
   const statuses = useMemo(() => [...new Set(projects?.map((p) => p.status).filter(Boolean))] as string[], [projects])
+  const types = useMemo(() => [...new Set(projects?.map((p) => p.type).filter(Boolean))] as string[], [projects])
 
   const columns = [
     { title: 'Name', dataIndex: 'name', key: 'name', render: (name: string, record: Project) => <a onClick={() => navigate(`/projects/${record.id}`)} className="text-[var(--color-primary)] hover:underline font-medium">{name}</a> },
-    { title: 'Type', dataIndex: 'type', key: 'type', render: (type: ProjectType) => <Tag color={typeColors[type]}>{type}</Tag> },
+    { title: 'Type', dataIndex: 'type', key: 'type', render: (type: string) => <Tag color={tagColorForProjectType(type)}>{formatProjectTypeLabel(type)}</Tag> },
     { title: 'Region', dataIndex: 'region', key: 'region' },
     { title: 'Client', dataIndex: 'client', key: 'client' },
     { title: 'Status', dataIndex: 'status', key: 'status', render: (status: string) => <Tag>{status || 'active'}</Tag> },
@@ -84,12 +79,16 @@ export function ProjectList() {
             className="w-64"
             allowClear
           />
-          <Select placeholder="Type" value={filterType} onChange={setFilterType} allowClear className="w-[150px]" options={[
-            { value: 'construction', label: 'Construction' },
-            { value: 'roads', label: 'Roads' },
-            { value: 'railway', label: 'Railway' },
-            { value: 'buildings', label: 'Buildings' },
-          ]} />
+          <Select
+            placeholder="Type"
+            value={filterType}
+            onChange={setFilterType}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            className="w-[180px]"
+            options={types.map((t) => ({ value: t, label: formatProjectTypeLabel(t) }))}
+          />
           <Select placeholder="Region" value={filterRegion} onChange={setFilterRegion} allowClear className="w-[150px]" options={regions.map((r) => ({ value: r, label: r }))} />
           <Select placeholder="Status" value={filterStatus} onChange={setFilterStatus} allowClear className="w-[150px]" options={statuses.map((s) => ({ value: s, label: s }))} />
           <div className="ml-auto flex gap-1">
@@ -133,7 +132,7 @@ export function ProjectList() {
                   description={
                     <div className="mt-2">
                       <div className="flex gap-2 flex-wrap">
-                        <Tag color={typeColors[p.type]}>{p.type}</Tag>
+                        <Tag color={tagColorForProjectType(p.type)}>{formatProjectTypeLabel(p.type)}</Tag>
                         {p.riskLevel && <Tag color={riskColors[p.riskLevel]}>{p.riskLevel}</Tag>}
                       </div>
                       {p.budget && <div className="mt-2 text-sm text-[var(--text-secondary)]">Budget: ${p.budget.toLocaleString()}</div>}

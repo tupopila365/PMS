@@ -1,19 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Form, Input, InputNumber, Select, Button, Card, Alert } from 'antd'
+import { Form, Input, InputNumber, Select, AutoComplete, Button, Card, Alert, message } from 'antd'
 import { ArrowLeftOutlined, FileTextOutlined } from '@ant-design/icons'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { templateService } from '../../services/templateService'
 import { projectService } from '../../services/projectService'
-import type { ProjectType, RiskLevel } from '../../types'
-
-const typeOptions: { value: ProjectType; label: string }[] = [
-  { value: 'construction', label: 'Construction' },
-  { value: 'roads', label: 'Roads' },
-  { value: 'railway', label: 'Railway' },
-  { value: 'buildings', label: 'Buildings' },
-]
+import type { RiskLevel } from '../../types'
+import { PROJECT_TYPE_PRESET_OPTIONS } from '../../utils/projectType'
 
 const riskOptions: { value: RiskLevel; label: string }[] = [
   { value: 'low', label: 'Low' },
@@ -36,7 +30,7 @@ export function ProjectCreate() {
     mutationFn: ({ templateId, values }: { templateId: string; values: Record<string, unknown> }) =>
       templateService.createProjectFromTemplate(templateId, {
         name: values.name as string,
-        type: values.type as ProjectType,
+        type: String(values.type ?? '').trim(),
         companyId: '1',
         region: values.region as string,
         client: values.client as string,
@@ -49,6 +43,9 @@ export function ProjectCreate() {
       queryClient.invalidateQueries({ queryKey: ['cost-categories'] })
       navigate(`/projects/${data.id}`)
     },
+    onError: (err: Error) => {
+      message.error(err.message || 'Could not create project from template')
+    },
   })
 
   const createPlainMutation = useMutation({
@@ -57,15 +54,25 @@ export function ProjectCreate() {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       navigate(`/projects/${data.id}`)
     },
+    onError: (err: unknown) => {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string }; status?: number } }).response?.data?.message
+          : undefined
+      message.error(
+        typeof msg === 'string' ? msg : 'Could not create project. Is the API running and are you logged in?'
+      )
+    },
   })
 
-  const onFinish = (values: { name: string; type: ProjectType; region?: string; client?: string; riskLevel?: RiskLevel; budget?: number; templateId?: string }) => {
+  const onFinish = (values: { name: string; type: string; region?: string; client?: string; riskLevel?: RiskLevel; budget?: number; templateId?: string }) => {
+    const type = String(values.type ?? '').trim()
     if (useTemplate && values.templateId) {
-      createFromTemplateMutation.mutate({ templateId: values.templateId, values })
+      createFromTemplateMutation.mutate({ templateId: values.templateId, values: { ...values, type } })
     } else {
       createPlainMutation.mutate({
         name: values.name,
-        type: values.type,
+        type,
         companyId: '1',
         region: values.region,
         client: values.client,
@@ -96,11 +103,29 @@ export function ProjectCreate() {
           <Form.Item name="name" label="Project Name" rules={[{ required: true }]}>
             <Input placeholder="Enter project name" />
           </Form.Item>
-          <Form.Item name="type" label="Type" rules={[{ required: true }]}>
-            <Select
-              options={typeOptions}
-              placeholder="Select type"
+          <Form.Item
+            name="type"
+            label="Type"
+            rules={[
+              {
+                validator: (_, v) => {
+                  if (v == null || !String(v).trim()) return Promise.reject(new Error('Please enter a type'))
+                  return Promise.resolve()
+                },
+              },
+            ]}
+          >
+            <AutoComplete
+              options={PROJECT_TYPE_PRESET_OPTIONS}
+              placeholder="Choose a suggestion or type your own"
               disabled={useTemplate}
+              allowClear
+              filterOption={(inputValue, option) => {
+                const v = (option?.value ?? '').toString().toLowerCase()
+                const lab = (option?.label ?? '').toString().toLowerCase()
+                const q = inputValue.toLowerCase()
+                return v.includes(q) || lab.includes(q)
+              }}
               onChange={() => useTemplate && form.setFieldValue('templateId', undefined)}
             />
           </Form.Item>

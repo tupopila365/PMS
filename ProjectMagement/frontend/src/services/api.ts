@@ -1,7 +1,7 @@
 import axios from 'axios'
 
+/** Base URL for REST calls: absolute (e.g. http://localhost:8081/api) uses CORS; relative /api uses Vite proxy in dev. */
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
-export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || !import.meta.env.VITE_API_URL
 
 export const api = axios.create({
   baseURL: API_BASE,

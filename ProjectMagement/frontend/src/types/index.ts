@@ -1,5 +1,12 @@
 export type UserRole = 'admin' | 'project_manager' | 'engineer' | 'contractor' | 'accountant' | 'vendor'
 
+/** RBAC reference row from GET /api/roles/catalog */
+export interface RoleCatalogEntry {
+  role: UserRole
+  access: string
+  description: string
+}
+
 export interface User {
   id: string
   name: string
@@ -27,7 +34,8 @@ export interface Subscription {
   status: 'active' | 'cancelled' | 'past_due'
 }
 
-export type ProjectType = 'construction' | 'roads' | 'railway' | 'buildings'
+/** Any string (built-in presets or custom, e.g. "Mining", "Water works"). */
+export type ProjectType = string
 
 export type RiskLevel = 'low' | 'medium' | 'high'
 
@@ -76,6 +84,11 @@ export interface Image {
   filePath: string
   latitude?: number
   longitude?: number
+  /** EXIF DateTimeOriginal / digitized — when the photo was taken (camera). */
+  capturedAt?: string
+  /** When the file was uploaded to the server (always set on new uploads). */
+  uploadedAt?: string
+  /** Legacy records only: before capturedAt/uploadedAt split. */
   timestamp?: string
   fileName?: string
   uploadedBy?: string
@@ -278,14 +291,27 @@ export interface Document {
   version: number
   uploadedAt: string
   uploadedBy?: string
+  /** Present when the file is stored on the server (multipart upload). */
+  filePath?: string
 }
+
+export type NotificationType =
+  | 'risk'
+  | 'change'
+  | 'assignment'
+  | 'milestone'
+  | 'general'
+  | 'timesheet_reminder'
 
 export interface Notification {
   id: string
-  type: 'risk' | 'change' | 'assignment' | 'milestone' | 'general'
+  type: NotificationType
   title: string
   message: string
   projectId?: string
+  taskId?: string
+  /** When set, notification is only shown to this user (in-app inbox). */
+  targetUserId?: string
   read: boolean
   createdAt: string
 }

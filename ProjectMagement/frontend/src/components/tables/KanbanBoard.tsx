@@ -1,9 +1,9 @@
 import { Select, Avatar } from 'antd'
 import { CalendarOutlined, DownOutlined } from '@ant-design/icons'
-import { mockUsers } from '../../mocks/data'
+import { useQuery } from '@tanstack/react-query'
+import { userService } from '../../services/userService'
+import { useAuth } from '../../context/AuthContext'
 import type { Task, TaskStatus } from '../../types'
-
-const userMap = Object.fromEntries(mockUsers.map((u) => [u.id, u.name]))
 
 const columns: { status: TaskStatus; title: string }[] = [
   { status: 'not_started', title: 'Not Started' },
@@ -19,7 +19,15 @@ interface KanbanBoardProps {
   loading?: boolean
 }
 
-function TaskCard({ task, onStatusChange }: { task: Task; onStatusChange: (id: string, status: TaskStatus) => void }) {
+function TaskCard({
+  task,
+  onStatusChange,
+  userMap,
+}: {
+  task: Task
+  onStatusChange: (id: string, status: TaskStatus) => void
+  userMap: Record<string, string>
+}) {
   const assignees = task.assignedTo?.map((id) => userMap[id] || id) ?? []
 
   return (
@@ -64,6 +72,14 @@ function TaskCard({ task, onStatusChange }: { task: Task; onStatusChange: (id: s
 }
 
 export function KanbanBoard({ tasks, onStatusChange, loading }: KanbanBoardProps) {
+  const { user } = useAuth()
+  const companyId = user?.companyId || '1'
+  const { data: users = [] } = useQuery({
+    queryKey: ['users', companyId],
+    queryFn: () => userService.getUsers(companyId),
+  })
+  const userMap = Object.fromEntries(users.map((u) => [u.id, u.name]))
+
   return (
     <div className="flex gap-4 overflow-x-auto pb-2 min-h-[400px]">
       {columns.map((col) => {
@@ -81,7 +97,7 @@ export function KanbanBoard({ tasks, onStatusChange, loading }: KanbanBoardProps
             </div>
             <div className="flex-1 p-2 space-y-2 overflow-y-auto min-h-0">
               {columnTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} />
+                <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} userMap={userMap} />
               ))}
               {columnTasks.length === 0 && !loading && (
                 <div className="flex flex-col items-center justify-center py-8 text-[var(--text-muted)] text-xs">

@@ -1,15 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { Card, Progress } from 'antd'
 import { projectService } from '../../services/projectService'
+import { riskService } from '../../services/riskService'
 import { getProjectRiskLevelFromRisks } from '../../utils/projectRisk'
-import type { ProjectType, RiskLevel } from '../../types'
-
-const typeColors: Record<ProjectType, string> = {
-  construction: '#52c41a',
-  roads: '#13c2c2',
-  railway: '#1890ff',
-  buildings: '#fa8c16',
-}
+import type { RiskLevel } from '../../types'
+import { chartColorForProjectType, formatProjectTypeLabel } from '../../utils/projectType'
 
 const riskColors: Record<RiskLevel, string> = {
   low: '#52c41a',
@@ -23,17 +18,22 @@ export function PortfolioAnalytics() {
     queryFn: projectService.getProjects,
   })
 
-  const byType = (projects || []).reduce<Record<ProjectType, number>>(
+  const { data: risks = [] } = useQuery({
+    queryKey: ['risks'],
+    queryFn: () => riskService.getRisks(),
+  })
+
+  const byType = (projects || []).reduce<Record<string, number>>(
     (acc, p) => {
       acc[p.type] = (acc[p.type] || 0) + 1
       return acc
     },
-    {} as Record<ProjectType, number>
+    {}
   )
 
   const byRisk = (projects || []).reduce<Record<RiskLevel, number>>(
     (acc, p) => {
-      const level = getProjectRiskLevelFromRisks(p.id, p.riskLevel) || 'low'
+      const level = getProjectRiskLevelFromRisks(risks, p.id, p.riskLevel) || 'low'
       acc[level] = (acc[level] || 0) + 1
       return acc
     },
@@ -68,10 +68,10 @@ export function PortfolioAnalytics() {
         {typeData.map(({ type, count, percent }) => (
           <div key={type} style={{ marginBottom: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ textTransform: 'capitalize' }}>{type}</span>
+              <span>{formatProjectTypeLabel(type)}</span>
               <span>{count} projects</span>
             </div>
-            <Progress percent={percent} strokeColor={typeColors[type as ProjectType]} showInfo={false} />
+            <Progress percent={percent} strokeColor={chartColorForProjectType(type)} showInfo={false} />
           </div>
         ))}
       </div>

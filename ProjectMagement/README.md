@@ -13,18 +13,17 @@ Project Management/
 
 ## Quick Start
 
-### Frontend (runs with mock data by default)
+### Frontend + backend (REST + CORS)
 
-1. Free disk space if needed, then:
-2. `cd frontend && npm install`
-3. `npm run dev`
-4. Open http://localhost:5173
-5. Login: **admin@cbmp.com** / **password**
+1. **JDK 17+** installed and `JAVA_HOME` set (the Maven Wrapper needs it). Start the API from `backend`:
+   - **Windows (PowerShell):** `.\mvnw.cmd spring-boot:run`
+   - **macOS / Linux:** `./mvnw spring-boot:run`  
+   If `mvn` is not recognized, use the commands above; you do not need Maven installed globally. First run may download Apache Maven into your user folder. Listens on port **8081** (8080 is avoided because many machines run Apache or other tools there).
+2. Leave `VITE_API_URL` unset in `frontend/.env` so the Vite dev server proxies `/api` to `http://localhost:8081` (no browser CORS in dev).
+3. `cd frontend && npm install && npm run dev` → http://localhost:5173
+4. Login: **admin@cbmp.com** / **password**
 
-### Backend (optional - for real API)
-
-1. `cd backend && mvn spring-boot:run`
-2. Set `VITE_API_URL=http://localhost:8080/api` in frontend `.env` to use real API
+**Direct API URL (CORS):** To call the backend from the browser without the proxy, set `VITE_API_URL=http://localhost:8081/api` in `frontend/.env`. The backend allows origins `http://localhost:5173` and `http://127.0.0.1:5173` for `/api/**`.
 
 ## Features
 
@@ -41,4 +40,3 @@ Project Management/
 
 - **Frontend**: React 18, TypeScript, Vite, Ant Design, React Router, TanStack Query, Leaflet, Recharts
 - **Backend**: Spring Boot 3, SQLite (SQL Server later)
-- **Mock mode**: Services use local mock data when `VITE_API_URL` is unset

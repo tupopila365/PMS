@@ -48,7 +48,9 @@ export function ImageUpload({ projectId, disabled, onSuccess }: ImageUploadProps
         <InboxOutlined style={{ fontSize: 48, color: '#1890ff' }} />
       </p>
       <p className="ant-upload-text">Click or drag images to upload</p>
-      <p className="ant-upload-hint">Supports geo-tagged images. EXIF data will be extracted.</p>
+      <p className="ant-upload-hint">
+        Photo taken (EXIF) and upload time are stored separately. GPS/date need JPEG/camera EXIF.
+      </p>
     </Dragger>
   )
 }

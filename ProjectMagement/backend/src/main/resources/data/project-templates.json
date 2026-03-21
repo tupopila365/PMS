@@ -1,0 +1,32 @@
+[
+  {
+    "id": "tpl-roads",
+    "name": "Roads & Highways",
+    "projectType": "roads",
+    "description": "Standard WBS and CBS for road construction projects",
+    "wbsTasks": [
+      { "tempId": "t1", "title": "Site Survey", "duration": 14, "isMilestone": true, "order": 0 },
+      { "tempId": "t2", "title": "Design & Permits", "duration": 21, "isMilestone": true, "order": 1, "predecessorTempIds": ["t1"] },
+      { "tempId": "t3", "title": "Earthworks & Grading", "duration": 30, "order": 2, "predecessorTempIds": ["t2"] }
+    ],
+    "cbsCategories": [
+      { "tempId": "c1", "name": "Labor", "budget": 0 },
+      { "tempId": "c2", "name": "Materials", "budget": 0 },
+      { "tempId": "c3", "name": "Equipment", "budget": 0 }
+    ]
+  },
+  {
+    "id": "tpl-buildings",
+    "name": "Buildings & Structures",
+    "projectType": "buildings",
+    "description": "Standard WBS and CBS for building construction",
+    "wbsTasks": [
+      { "tempId": "t1", "title": "Site Preparation", "duration": 14, "order": 0 },
+      { "tempId": "t2", "title": "Structural Design", "duration": 30, "isMilestone": true, "order": 1, "predecessorTempIds": ["t1"] }
+    ],
+    "cbsCategories": [
+      { "tempId": "c1", "name": "Labor", "budget": 0 },
+      { "tempId": "c2", "name": "Materials", "budget": 0 }
+    ]
+  }
+]

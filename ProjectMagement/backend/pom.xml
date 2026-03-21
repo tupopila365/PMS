@@ -8,7 +8,6 @@
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.2.5</version>
         <relativePath/>
-        <scope>import</scope>
     </parent>
     <groupId>com.cbmp</groupId>
     <artifactId>cbmp-backend</artifactId>
@@ -36,6 +35,10 @@
             <artifactId>sqlite-jdbc</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-community-dialects</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.12.5</version>
@@ -51,6 +54,11 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>0.12.5</version>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.drewnoakes</groupId>
+            <artifactId>metadata-extractor</artifactId>
+            <version>2.19.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -1,10 +1,9 @@
 /// <reference types="vite/client" />
 
-declare module 'msw' {
-  export const http: { get: any; post: any; put: any; delete: any }
-  export const HttpResponse: { json: (data: unknown, init?: { status?: number }) => unknown }
+interface ImportMetaEnv {
+  readonly VITE_API_URL?: string
 }
 
-declare module 'msw/browser' {
-  export function setupWorker(...handlers: any[]): { start: (opts?: any) => Promise<void> }
+interface ImportMeta {
+  readonly env: ImportMetaEnv
 }

@@ -7,10 +7,10 @@ import { dashboardService } from '../../services/dashboardService'
 import { projectService } from '../../services/projectService'
 import { taskService } from '../../services/taskService'
 import { PageHeader } from '../../components/layout/PageHeader'
-import type { ProjectType, Task } from '../../types'
+import type { Task } from '../../types'
+import { formatProjectTypeLabel } from '../../utils/projectType'
 
 const COLORS = ['#2563eb', '#16a34a', '#ea580c', '#dc2626']
-const TYPE_LABELS: Record<ProjectType, string> = { construction: 'Construction', roads: 'Roads', railway: 'Railway', buildings: 'Buildings' }
 
 export function Reports() {
   const navigate = useNavigate()
@@ -30,23 +30,19 @@ export function Reports() {
   })
 
   const completionData = useMemo(() => {
-    const byType: Record<ProjectType, { total: number; completed: number }> = {
-      construction: { total: 0, completed: 0 },
-      roads: { total: 0, completed: 0 },
-      railway: { total: 0, completed: 0 },
-      buildings: { total: 0, completed: 0 },
-    }
+    const byType: Record<string, { total: number; completed: number }> = {}
     for (const p of projects) {
       const typeTasks = tasks.filter((t) => t.projectId === p.id)
       const total = typeTasks.length || 1
       const completed = typeTasks.filter((t) => t.status === 'completed').length
+      if (!byType[p.type]) byType[p.type] = { total: 0, completed: 0 }
       byType[p.type].total += total
       byType[p.type].completed += completed
     }
-    return (Object.entries(byType) as [ProjectType, { total: number; completed: number }][])
+    return Object.entries(byType)
       .filter(([, { total }]) => total > 0)
       .map(([type, { total, completed }]) => ({
-        name: TYPE_LABELS[type],
+        name: formatProjectTypeLabel(type),
         value: Math.round((completed / total) * 100),
       }))
   }, [projects, tasks])

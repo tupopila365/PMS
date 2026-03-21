@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Table, Select, Button, DatePicker, Tag } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { taskService } from '../../services/taskService'
+import { userService } from '../../services/userService'
 import { CreateTaskModal } from '../tasks/CreateTaskModal'
-import { mockUsers } from '../../mocks/data'
 import type { Task, TaskStatus } from '../../types'
 import dayjs from 'dayjs'
 
@@ -14,8 +14,6 @@ const statusOptions = [
   { value: 'completed', label: 'Completed' },
 ]
 
-const userOptions = mockUsers.map((u) => ({ value: u.id, label: u.name }))
-
 interface TaskTableProps {
   projectId?: string
 }
@@ -23,6 +21,11 @@ interface TaskTableProps {
 export function TaskTable({ projectId }: TaskTableProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const queryClient = useQueryClient()
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => userService.getUsers(),
+  })
+  const userOptions = users.map((u) => ({ value: u.id, label: u.name }))
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['tasks', projectId],
     queryFn: () => taskService.getTasks(projectId),

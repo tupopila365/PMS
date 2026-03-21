@@ -44,7 +44,15 @@ export function ImageMapView({ images }: ImageMapViewProps) {
           <Marker key={img.id} position={[img.latitude!, img.longitude!]}>
             <Popup>
               <div><strong>{img.fileName || img.filePath}</strong></div>
-              {img.timestamp && <div>{new Date(img.timestamp).toLocaleString()}</div>}
+              {img.capturedAt && (
+                <div>Taken: {new Date(img.capturedAt).toLocaleString()}</div>
+              )}
+              {(img.uploadedAt || img.timestamp) && (
+                <div>
+                  Uploaded:{' '}
+                  {new Date((img.uploadedAt || img.timestamp) as string).toLocaleString()}
+                </div>
+              )}
             </Popup>
           </Marker>
         ))}

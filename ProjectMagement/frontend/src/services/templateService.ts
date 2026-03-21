@@ -1,5 +1,4 @@
-import { api, USE_MOCK } from './api'
-import { mockProjectTemplates } from '../mocks/data'
+import { api } from './api'
 import { projectService } from './projectService'
 import { taskService } from './taskService'
 import { costService } from './costService'
@@ -7,18 +6,12 @@ import type { ProjectTemplate, Project, ProjectType } from '../types'
 
 export const templateService = {
   async getTemplates(projectType?: ProjectType): Promise<ProjectTemplate[]> {
-    if (USE_MOCK) {
-      let list = [...mockProjectTemplates]
-      if (projectType) list = list.filter((t) => t.projectType === projectType)
-      return list
-    }
     const params = projectType ? { projectType } : {}
     const { data } = await api.get<ProjectTemplate[]>('/templates', { params })
     return data
   },
 
   async getTemplate(id: string): Promise<ProjectTemplate | undefined> {
-    if (USE_MOCK) return mockProjectTemplates.find((t) => t.id === id)
     const { data } = await api.get<ProjectTemplate>(`/templates/${id}`)
     return data
   },

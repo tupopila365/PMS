@@ -1,7 +1,7 @@
 import { Modal, Form, Input, Select, Button, DatePicker } from 'antd'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { taskService } from '../../services/taskService'
-import { mockUsers } from '../../mocks/data'
+import { userService } from '../../services/userService'
 import type { TaskStatus } from '../../types'
 import dayjs from 'dayjs'
 
@@ -20,6 +20,11 @@ interface CreateTaskModalProps {
 export function CreateTaskModal({ open, onClose, projectId }: CreateTaskModalProps) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => userService.getUsers(),
+  })
+  const userOptions = users.map((u) => ({ value: u.id, label: u.name }))
 
   const createMutation = useMutation({
     mutationFn: taskService.createTask,
@@ -40,8 +45,6 @@ export function CreateTaskModal({ open, onClose, projectId }: CreateTaskModalPro
       dueDate: values.dueDate ? values.dueDate.format('YYYY-MM-DD') : undefined,
     })
   }
-
-  const userOptions = mockUsers.map((u) => ({ value: u.id, label: u.name }))
 
   return (
     <Modal title="Add Task" open={open} onCancel={onClose} footer={null}>

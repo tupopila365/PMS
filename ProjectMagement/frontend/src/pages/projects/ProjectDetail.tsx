@@ -11,18 +11,11 @@ import { ImageUpload } from '../../components/upload/ImageUpload'
 import { ImageCard } from '../../components/media/ImageCard'
 import { mediaService } from '../../services/mediaService'
 import { financeService } from '../../services/financeService'
-import type { ProjectType } from '../../types'
+import { formatProjectTypeLabel } from '../../utils/projectType'
 import { useState } from 'react'
 import { CreateInvoiceModal } from '../../components/finance/CreateInvoiceModal'
 import { RecordPaymentModal } from '../../components/finance/RecordPaymentModal'
 import { PageLoader } from '../../components/ui/PageLoader'
-
-const typeLabels: Record<ProjectType, string> = {
-  construction: 'Construction',
-  roads: 'Roads',
-  railway: 'Railway',
-  buildings: 'Buildings',
-}
 
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
@@ -211,7 +204,7 @@ export function ProjectDetail() {
           ))}
         </div>
         <Descriptions column={{ xs: 1, sm: 2 }} className="[&_.ant-descriptions-item-label]:text-[var(--text-secondary)] [&_.ant-descriptions-item-content]:text-[var(--text-primary)]">
-          <Descriptions.Item label="Type"><Tag>{typeLabels[project.type]}</Tag></Descriptions.Item>
+          <Descriptions.Item label="Type"><Tag>{formatProjectTypeLabel(project.type)}</Tag></Descriptions.Item>
           <Descriptions.Item label="Status">{project.status || 'Active'}</Descriptions.Item>
           {project.region && <Descriptions.Item label="Region">{project.region}</Descriptions.Item>}
           {project.client && <Descriptions.Item label="Client">{project.client}</Descriptions.Item>}
