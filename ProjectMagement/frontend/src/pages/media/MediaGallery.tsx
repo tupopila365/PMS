@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Select, Tabs, Button } from 'antd'
 import { UploadOutlined, PictureOutlined } from '@ant-design/icons'
@@ -22,14 +22,21 @@ export function MediaGallery() {
   })
 
   const tabItems = [
-    { key: 'grid', label: 'Gallery', icon: <PictureOutlined />, children: (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-        {images?.map((img) => (
-          <ImageCard key={img.id} image={img} />
-        ))}
-        {(!images || images.length === 0) && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>No images</div>}
-      </div>
-    )},
+    {
+      key: 'grid',
+      label: 'Gallery',
+      icon: <PictureOutlined />,
+      children: (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
+          {images?.map((img) => (
+            <ImageCard key={img.id} image={img} />
+          ))}
+          {(!images || images.length === 0) && (
+            <div className="col-span-full text-center py-12 text-[var(--text-muted)]">No images</div>
+          )}
+        </div>
+      ),
+    },
     { key: 'map', label: 'Map', icon: <PictureOutlined />, children: <ImageMapView images={images || []} /> },
   ]
 
@@ -41,18 +48,24 @@ export function MediaGallery() {
           <>
             <Select
               placeholder="Filter by project"
-              style={{ width: 200, marginRight: 8 }}
+              className="w-[200px]"
               options={projects?.map((p) => ({ value: p.id, label: p.name }))}
               value={projectId}
-              onChange={setProjectId}
+              onChange={(v) => {
+                setProjectId(v)
+                setSelectedProjectId(v)
+              }}
               allowClear
             />
-            <Button icon={<UploadOutlined />} onClick={() => navigate('/media')}>Upload</Button>
+            <Button icon={<UploadOutlined />} onClick={() => navigate('/media')}>
+              Upload
+            </Button>
           </>
         }
       />
-      <Card styles={{ body: { padding: 16 } }}>
-        <Tabs items={tabItems} />
+      <Card className="rounded-xl border border-[var(--border)]" styles={{ body: { padding: 16 } }}>
+        {/* Unmount hidden tabs so Leaflet measures a visible container (avoids gray map). */}
+        <Tabs destroyInactiveTabPane items={tabItems} />
       </Card>
     </div>
   )

@@ -7,26 +7,34 @@ import { dashboardService } from '../../services/dashboardService'
 import { projectService } from '../../services/projectService'
 import { taskService } from '../../services/taskService'
 import { PageHeader } from '../../components/layout/PageHeader'
+import { useProjectContext } from '../../context/ProjectContext'
 import type { Task } from '../../types'
 import { formatProjectTypeLabel } from '../../utils/projectType'
 
-const COLORS = ['#2563eb', '#16a34a', '#ea580c', '#dc2626']
+const COLORS = ['#a16207', '#52525b', '#15803d', '#b91c1c']
 
 export function Reports() {
   const navigate = useNavigate()
+  const { selectedProjectId } = useProjectContext()
   const { data: kpis } = useQuery({
-    queryKey: ['dashboard', 'kpis'],
-    queryFn: dashboardService.getKPIs,
+    queryKey: ['dashboard', 'kpis', selectedProjectId],
+    queryFn: () => dashboardService.getKPIs(selectedProjectId),
   })
 
-  const { data: projects = [] } = useQuery({
+  const { data: projectsAll = [] } = useQuery({
     queryKey: ['projects'],
     queryFn: projectService.getProjects,
   })
 
+  const projects = useMemo(
+    () =>
+      selectedProjectId ? projectsAll.filter((p) => p.id === selectedProjectId) : projectsAll,
+    [projectsAll, selectedProjectId],
+  )
+
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => taskService.getTasks(),
+    queryKey: ['tasks', selectedProjectId],
+    queryFn: () => taskService.getTasks(selectedProjectId),
   })
 
   const completionData = useMemo(() => {
@@ -54,14 +62,14 @@ export function Reports() {
   }, [tasks, projects])
 
   const budgetData = [
-    { name: 'Budget', value: kpis?.totalBudget || 0 },
+    { name: 'Estimated', value: kpis?.totalBudget || 0 },
     { name: 'Paid', value: kpis?.totalPaid || 0 },
     { name: 'Outstanding', value: kpis?.outstandingBalance || 0 },
   ]
 
   return (
     <div>
-      <PageHeader title="Reports & Analytics" subtitle="Project and budget analytics." />
+      <PageHeader title="Reports & Analytics" subtitle="Project performance, estimated vs paid, and completion." />
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
           <Card
@@ -124,7 +132,7 @@ export function Reports() {
         </Col>
         <Col xs={24} lg={12}>
           <Card
-            title="Budget Overview"
+            title="Estimated vs paid"
             styles={{
               header: { borderBottom: '1px solid var(--border)', background: 'var(--surface-muted)' },
               body: { padding: '20px 24px' },
@@ -135,8 +143,8 @@ export function Reports() {
               <BarChart data={budgetData}>
                 <defs>
                   <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" />
-                    <stop offset="100%" stopColor="#2563eb" />
+                    <stop offset="0%" stopColor="#ca8a04" />
+                    <stop offset="100%" stopColor="#a16207" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />

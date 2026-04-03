@@ -45,6 +45,15 @@ public class TaskEntity {
 
     private Boolean isMilestone;
 
+    /** Quality / procurement: physical sample required before execution. */
+    private Boolean sampleRequired;
+
+    /** Formal sign-off required before marking complete. */
+    private Boolean approvalRequired;
+
+    /** Hidden from default task views; separate from workflow status (e.g. completed). */
+    private Boolean archived;
+
     private Instant createdAt;
 
     @PrePersist
@@ -53,6 +62,9 @@ public class TaskEntity {
         if (createdAt == null) createdAt = Instant.now();
         if (status == null) status = "not_started";
         if (isMilestone == null) isMilestone = false;
+        if (sampleRequired == null) sampleRequired = false;
+        if (approvalRequired == null) approvalRequired = false;
+        if (archived == null) archived = false;
     }
 
     public String getId() {
@@ -165,6 +177,30 @@ public class TaskEntity {
 
     public void setIsMilestone(Boolean milestone) {
         isMilestone = milestone;
+    }
+
+    public Boolean getSampleRequired() {
+        return sampleRequired;
+    }
+
+    public void setSampleRequired(Boolean sampleRequired) {
+        this.sampleRequired = sampleRequired;
+    }
+
+    public Boolean getApprovalRequired() {
+        return approvalRequired;
+    }
+
+    public void setApprovalRequired(Boolean approvalRequired) {
+        this.approvalRequired = approvalRequired;
+    }
+
+    public Boolean getArchived() {
+        return archived;
+    }
+
+    public void setArchived(Boolean archived) {
+        this.archived = archived;
     }
 
     public Instant getCreatedAt() {

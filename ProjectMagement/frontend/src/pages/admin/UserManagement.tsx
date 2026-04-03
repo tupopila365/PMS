@@ -17,6 +17,15 @@ const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: 'vendor', label: 'Vendor' },
 ]
 
+/** Values should match project `type` strings (case-insensitive on the server). */
+const DISCIPLINE_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'All types (no discipline filter)' },
+  { value: 'mechanical', label: 'Mechanical' },
+  { value: 'civil', label: 'Civil' },
+  { value: 'electrical', label: 'Electrical' },
+  { value: 'structural', label: 'Structural' },
+]
+
 export function UserManagement() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
@@ -73,6 +82,7 @@ export function UserManagement() {
       email: u.email,
       role: u.role,
       companyId: u.companyId,
+      discipline: u.discipline ?? '',
     })
     setEditOpen(true)
   }
@@ -82,6 +92,7 @@ export function UserManagement() {
     email: string
     role: UserRole
     password: string
+    discipline?: string
   }) => {
     createMutation.mutate({
       name: values.name.trim(),
@@ -89,6 +100,7 @@ export function UserManagement() {
       role: values.role,
       password: values.password,
       companyId,
+      discipline: values.discipline?.trim() ? values.discipline.trim() : undefined,
     })
   }
 
@@ -98,6 +110,7 @@ export function UserManagement() {
     role: UserRole
     password?: string
     companyId?: string
+    discipline?: string
   }) => {
     if (!editingUser) return
     const payload: UpdateUserPayload = {
@@ -105,6 +118,7 @@ export function UserManagement() {
       email: values.email.trim().toLowerCase(),
       role: values.role,
       companyId: values.companyId || companyId,
+      discipline: values.discipline?.trim() ?? '',
     }
     if (values.password && values.password.length > 0) {
       payload.password = values.password
@@ -116,6 +130,12 @@ export function UserManagement() {
     { title: 'Name', dataIndex: 'name', key: 'name' },
     { title: 'Email', dataIndex: 'email', key: 'email' },
     { title: 'Role', dataIndex: 'role', key: 'role', render: (r: string) => <Tag>{r.replace(/_/g, ' ')}</Tag> },
+    {
+      title: 'Discipline',
+      dataIndex: 'discipline',
+      key: 'discipline',
+      render: (d: string | undefined) => (d && d.trim() ? <Tag>{d}</Tag> : <span className="text-[var(--text-muted)]">All types</span>),
+    },
     {
       title: 'Action',
       key: 'action',
@@ -183,6 +203,14 @@ export function UserManagement() {
             <Select options={ROLE_OPTIONS} />
           </Form.Item>
           <Form.Item
+            name="discipline"
+            label="Discipline filter"
+            tooltip="For engineers, contractors, and vendors: restrict visible projects to this project type. Admins, project managers, and accountants always see all projects in the company."
+            initialValue=""
+          >
+            <Select allowClear options={DISCIPLINE_OPTIONS} placeholder="All types" />
+          </Form.Item>
+          <Form.Item
             name="password"
             label="Initial password"
             rules={[{ required: true, min: 4, message: 'At least 4 characters' }]}
@@ -213,6 +241,13 @@ export function UserManagement() {
           </Form.Item>
           <Form.Item name="role" label="Role" rules={[{ required: true }]}>
             <Select options={ROLE_OPTIONS} />
+          </Form.Item>
+          <Form.Item
+            name="discipline"
+            label="Discipline filter"
+            tooltip="Must match project type for scoped users. Clear for all types."
+          >
+            <Select allowClear options={DISCIPLINE_OPTIONS} placeholder="All types" />
           </Form.Item>
           <Form.Item name="password" label="New password">
             <Input.Password placeholder="Leave blank to keep current password" autoComplete="new-password" />

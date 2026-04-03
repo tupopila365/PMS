@@ -3,9 +3,11 @@ import { Button, Space } from 'antd'
 import { AppstoreOutlined, BarChartOutlined, ApartmentOutlined } from '@ant-design/icons'
 import { TaskTable } from '../../components/tables/TaskTable'
 import { PageHeader } from '../../components/layout/PageHeader'
+import { useProjectContext } from '../../context/ProjectContext'
 
 export function TaskList() {
   const navigate = useNavigate()
+  const { selectedProjectId } = useProjectContext()
 
   return (
     <div>
@@ -22,7 +24,7 @@ export function TaskList() {
         }
       />
       <div className="rounded-xl border border-[var(--border)] overflow-hidden">
-        <TaskTable />
+        <TaskTable projectId={selectedProjectId} />
       </div>
     </div>
   )

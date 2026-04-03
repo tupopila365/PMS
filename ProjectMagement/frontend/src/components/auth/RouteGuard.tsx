@@ -1,6 +1,6 @@
 import { useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { canAccessRoute } from '../../utils/permissions'
+import { canAccessRoute, getDefaultLandingPath } from '../../utils/permissions'
 import type { UserRole } from '../../types'
 
 export function RouteGuard({ children }: { children: React.ReactNode }) {
@@ -10,9 +10,14 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
 
   if (!user) return <>{children}</>
 
-  const allowed = canAccessRoute(user.role as UserRole, path)
+  const role = user.role as UserRole
+  const allowed = canAccessRoute(role, path)
   if (!allowed) {
-    return <Navigate to="/dashboard" replace state={{ from: path }} />
+    const fallback = getDefaultLandingPath(role)
+    if (path !== fallback && canAccessRoute(role, fallback)) {
+      return <Navigate to={fallback} replace state={{ from: path }} />
+    }
+    return <Navigate to="/login" replace state={{ from: path }} />
   }
 
   return <>{children}</>

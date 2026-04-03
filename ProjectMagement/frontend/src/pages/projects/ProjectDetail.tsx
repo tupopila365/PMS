@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, Descriptions, Tag, Button, Tabs } from 'antd'
+import { Card, Descriptions, Tag, Button, Tabs, Result, Typography } from 'antd'
 import { ArrowLeftOutlined, PlusOutlined, ApartmentOutlined, DollarOutlined, TeamOutlined, FundOutlined, FileTextOutlined, UnorderedListOutlined, UserOutlined } from '@ant-design/icons'
 import { projectService } from '../../services/projectService'
 import { baselineService } from '../../services/baselineService'
@@ -12,10 +12,14 @@ import { ImageCard } from '../../components/media/ImageCard'
 import { mediaService } from '../../services/mediaService'
 import { financeService } from '../../services/financeService'
 import { formatProjectTypeLabel } from '../../utils/projectType'
+import axios from 'axios'
 import { useState } from 'react'
 import { CreateInvoiceModal } from '../../components/finance/CreateInvoiceModal'
 import { RecordPaymentModal } from '../../components/finance/RecordPaymentModal'
 import { PageLoader } from '../../components/ui/PageLoader'
+import { VariationOrdersTab } from '../../components/project/VariationOrdersTab'
+import { ProjectRFIsTab } from '../../components/project/ProjectRFIsTab'
+import { ProjectBOQTab } from '../../components/project/ProjectBOQTab'
 
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
@@ -23,10 +27,17 @@ export function ProjectDetail() {
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
 
-  const { data: project, isLoading } = useQuery({
+  const {
+    data: project,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['project', id],
     queryFn: () => projectService.getProject(id!),
     enabled: !!id && id !== 'new',
+    retry: 1,
   })
 
   const { data: images } = useQuery({
@@ -64,8 +75,45 @@ export function ProjectDetail() {
     projectInvoices.some((i) => i.id === p.invoiceId)
   ) || []
 
-  if (isLoading || !project) {
+  if (isLoading) {
     return <PageLoader />
+  }
+
+  if (isError || !project) {
+    let msg = 'The project could not be loaded. It may have been removed or the server is unreachable.'
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        msg = 'This project was not found. It may have been deleted or the ID in the URL is wrong.'
+      } else if (error.response?.status != null) {
+        msg = `Request failed (${error.response.status}). Check that the API is running and you are logged in.`
+      } else if (error.message) {
+        msg = error.message
+      }
+    } else if (error instanceof Error && error.message) {
+      msg = error.message
+    }
+    return (
+      <div>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/projects')} className="mb-4" type="text">
+          Back to Projects
+        </Button>
+        <Card className="rounded-xl border border-[var(--border)] max-w-lg">
+          <Result
+            status="error"
+            title="Unable to load project"
+            subTitle={<Typography.Text type="secondary">{msg}</Typography.Text>}
+            extra={[
+              <Button type="primary" key="retry" onClick={() => refetch()}>
+                Try again
+              </Button>,
+              <Button key="list" onClick={() => navigate('/projects')}>
+                All projects
+              </Button>,
+            ]}
+          />
+        </Card>
+      </div>
+    )
   }
 
   const quickActions = [
@@ -101,7 +149,10 @@ export function ProjectDetail() {
               ))}
               {(!images || images.length === 0) && <div className="col-span-full text-[var(--text-muted)] py-4">No images</div>}
             </div>
-            <h4 className="text-base font-semibold text-[var(--text-primary)] mb-3">Map</h4>
+            <h4 className="text-base font-semibold text-[var(--text-primary)] mb-1">Map</h4>
+            <p className="text-xs text-[var(--text-muted)] mb-3 m-0">
+              Geo-tagged photos appear as pins on the map (Gallery cards also show coordinates when GPS exists in the file).
+            </p>
             <ImageMapView images={images || []} />
           </div>
         </div>
@@ -121,14 +172,15 @@ export function ProjectDetail() {
           ) : (
             <div className="flex flex-col gap-4">
               {baselines.map((b) => {
-                const budgetVar = (project?.actualCost ?? 0) - b.budget
+                const baselineBudget = Number(b.budget ?? 0)
+                const budgetVar = (project?.actualCost ?? 0) - baselineBudget
                 const scheduleVar = project?.plannedEndDate && b.plannedEndDate ? (new Date(project.plannedEndDate).getTime() - new Date(b.plannedEndDate).getTime()) / (24 * 60 * 60 * 1000) : null
                 return (
                   <Card key={b.id} size="small" title={`Baseline ${b.baselineDate}`} className="rounded-xl">
                     <table className="w-full border-collapse">
                       <tbody className="text-sm">
-                        <tr><td className="py-1">Budget (baseline)</td><td className="text-right">${b.budget.toLocaleString()}</td></tr>
-                        <tr><td className="py-1">Actual / Current</td><td className="text-right">${(project?.actualCost ?? 0).toLocaleString()}</td></tr>
+                        <tr><td className="py-1">Estimated cost (baseline)</td><td className="text-right">${baselineBudget.toLocaleString()}</td></tr>
+                        <tr><td className="py-1">Actual cost (current)</td><td className="text-right">${(project?.actualCost ?? 0).toLocaleString()}</td></tr>
                         <tr><td className="py-1">Cost variance</td><td className={`text-right ${budgetVar > 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>${budgetVar >= 0 ? '+' : ''}{budgetVar.toLocaleString()}</td></tr>
                         <tr><td className="py-1">Planned end (baseline)</td><td className="text-right">{b.plannedEndDate}</td></tr>
                         <tr><td className="py-1">Schedule variance</td><td className={`text-right ${scheduleVar != null && scheduleVar > 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>{scheduleVar != null ? (scheduleVar > 0 ? '+' : '') + Math.round(scheduleVar) + ' days' : '-'}</td></tr>
@@ -141,6 +193,21 @@ export function ProjectDetail() {
           )}
         </div>
       ),
+    },
+    {
+      key: 'variations',
+      label: 'Variation orders',
+      children: <VariationOrdersTab projectId={project.id} />,
+    },
+    {
+      key: 'rfis',
+      label: 'RFIs',
+      children: <ProjectRFIsTab projectId={project.id} />,
+    },
+    {
+      key: 'boq',
+      label: 'BOQ',
+      children: <ProjectBOQTab projectId={project.id} />,
     },
     {
       key: 'finance',
@@ -158,7 +225,7 @@ export function ProjectDetail() {
               <ul className="m-0 pl-5 space-y-1">
                 {projectInvoices.map((inv) => (
                   <li key={inv.id} className="text-[var(--text-primary)]">
-                    ${inv.amount.toLocaleString()} - <Tag color={inv.status === 'paid' ? 'green' : 'orange'}>{inv.status}</Tag>
+                    ${Number(inv.amount ?? 0).toLocaleString()} - <Tag color={inv.status === 'paid' ? 'green' : 'orange'}>{inv.status}</Tag>
                   </li>
                 ))}
               </ul>
@@ -174,7 +241,7 @@ export function ProjectDetail() {
             ) : (
               <ul className="m-0 pl-5 space-y-1">
                 {projectPayments.map((p) => (
-                  <li key={p.id} className="text-[var(--text-primary)]">${p.amountPaid.toLocaleString()} - {p.paidAt ? new Date(p.paidAt).toLocaleDateString() : ''}</li>
+                  <li key={p.id} className="text-[var(--text-primary)]">${Number(p.amountPaid ?? 0).toLocaleString()} - {p.paidAt ? new Date(p.paidAt).toLocaleDateString() : ''}</li>
                 ))}
               </ul>
             )}
@@ -209,10 +276,14 @@ export function ProjectDetail() {
           {project.region && <Descriptions.Item label="Region">{project.region}</Descriptions.Item>}
           {project.client && <Descriptions.Item label="Client">{project.client}</Descriptions.Item>}
           {project.riskLevel && <Descriptions.Item label="Risk"><Tag color={project.riskLevel === 'low' ? 'green' : project.riskLevel === 'medium' ? 'orange' : 'red'}>{project.riskLevel}</Tag></Descriptions.Item>}
-          {project.budget && <Descriptions.Item label="Budget">${project.budget.toLocaleString()}</Descriptions.Item>}
-          {project.actualCost != null && <Descriptions.Item label="Actual Cost">${project.actualCost.toLocaleString()}</Descriptions.Item>}
+          {project.budget && <Descriptions.Item label="Estimated cost">${project.budget.toLocaleString()}</Descriptions.Item>}
+          {project.actualCost != null && <Descriptions.Item label="Actual cost">${project.actualCost.toLocaleString()}</Descriptions.Item>}
         </Descriptions>
-        <Tabs items={tabItems} className="mt-6 [&_.ant-tabs-nav]:mb-4" />
+        <Tabs
+          destroyInactiveTabPane
+          items={tabItems}
+          className="mt-6 [&_.ant-tabs-nav]:mb-4"
+        />
       </Card>
     </div>
   )

@@ -45,6 +45,10 @@ export function Documents() {
   const { can } = usePermissions()
 
   useEffect(() => {
+    setProjectFilter(selectedProjectId)
+  }, [selectedProjectId])
+
+  useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl)
     }

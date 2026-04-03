@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface RiskRepository extends JpaRepository<RiskEntity, String> {
     List<RiskEntity> findByProjectId(String projectId);
+
+    List<RiskEntity> findTop25ByOrderByCreatedAtDesc();
 }

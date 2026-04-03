@@ -3,6 +3,7 @@ package com.cbmp.audit;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,16 +43,16 @@ public class AuditController {
     }
 
     private Map<String, Object> toJson(AuditLogEntity e) {
-        return Map.of(
-                "id", e.getId(),
-                "userId", e.getUserId() != null ? e.getUserId() : "",
-                "userName", e.getUserName() != null ? e.getUserName() : "",
-                "action", e.getAction() != null ? e.getAction() : "",
-                "entityType", e.getEntityType() != null ? e.getEntityType() : "",
-                "entityId", e.getEntityId() != null ? e.getEntityId() : "",
-                "projectId", e.getProjectId() != null ? e.getProjectId() : "",
-                "projectName", e.getProjectName() != null ? e.getProjectName() : "",
-                "timestamp", e.getTimestamp() != null ? e.getTimestamp() : ""
-        );
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", e.getId() != null ? e.getId() : "");
+        m.put("userId", e.getUserId() != null ? e.getUserId() : "");
+        m.put("userName", e.getUserName() != null ? e.getUserName() : "");
+        m.put("action", e.getAction() != null ? e.getAction() : "");
+        m.put("entityType", e.getEntityType() != null ? e.getEntityType() : "");
+        m.put("entityId", e.getEntityId() != null ? e.getEntityId() : "");
+        m.put("projectId", e.getProjectId() != null ? e.getProjectId() : "");
+        m.put("projectName", e.getProjectName() != null ? e.getProjectName() : "");
+        m.put("timestamp", e.getTimestamp() != null ? e.getTimestamp() : "");
+        return m;
     }
 }

@@ -13,6 +13,8 @@ export interface User {
   email: string
   role: UserRole
   companyId: string
+  /** When set (non-admin PM/accountant), server filters projects to this type (case-insensitive). */
+  discipline?: string | null
 }
 
 export interface Company {
@@ -74,7 +76,94 @@ export interface Task {
   parentId?: string
   order?: number
   isMilestone?: boolean
+  /** QC: sample / mock-up required before execution */
+  sampleRequired?: boolean
+  /** Formal approval required before closing the task */
+  approvalRequired?: boolean
+  /** Cleared from default views; use Unarchive to restore. Distinct from status (e.g. completed). */
+  archived?: boolean
   createdAt?: string
+}
+
+/** Scope change / addition outside original contract (VO). */
+export interface VariationOrder {
+  id: string
+  projectId: string
+  reference?: string
+  title: string
+  description?: string
+  status?: string
+  valueEstimate?: number
+  requestedAt?: string
+  /** Set by server on create — submitter for approval notifications */
+  submittedByUserId?: string
+  /** Optional ERP / finance system reference once agreed */
+  erpReference?: string
+}
+
+/** Request for information — tag responders for direct notifications. */
+export interface ProjectRFI {
+  id: string
+  projectId: string
+  subject: string
+  question?: string
+  criticality?: 'low' | 'medium' | 'high' | 'critical'
+  /** draft (no notify) | open | issued | answered | closed */
+  status?: string
+  responderUserIds?: string[]
+  dueDate?: string
+  /** Set by server — who raised the RFI */
+  raisedByUserId?: string
+  /** Formal response text when status is answered */
+  responseText?: string
+}
+
+/** Single BOQ line (imported or manual). */
+export interface BoqLine {
+  id: string
+  projectId: string
+  itemCode: string
+  description?: string
+  unit?: string
+  quantity?: number
+  rate?: number
+  amount?: number
+  section?: string
+}
+
+export interface BoqCompareProjectMeta {
+  id: string
+  name: string
+}
+
+export interface BoqCompareCell {
+  quantity?: number
+  rate?: number
+  amount?: number
+  unit?: string
+  description?: string
+}
+
+export interface BoqCompareRow {
+  itemCode: string
+  description?: string
+  byProject: Record<string, BoqCompareCell>
+}
+
+export interface BoqCompareResult {
+  projects: BoqCompareProjectMeta[]
+  rows: BoqCompareRow[]
+}
+
+/** Thread on an image (upload note + user comments). */
+export interface ImageComment {
+  id: string
+  text: string
+  authorName: string
+  userId?: string
+  createdAt: string
+  /** upload_note = from upload flow; comment = added later on the image */
+  kind?: string
 }
 
 export interface Image {
@@ -84,6 +173,15 @@ export interface Image {
   filePath: string
   latitude?: number
   longitude?: number
+  /**
+   * Server-set after upload: true if GPS was read from EXIF, false if not (map needs GPS).
+   * Omitted on older records — infer from latitude/longitude when needed.
+   */
+  gpsExtracted?: boolean
+  /**
+   * Server-set after upload: true if `capturedAt` was read from EXIF, false if no camera date in file.
+   */
+  capturedFromExif?: boolean
   /** EXIF DateTimeOriginal / digitized — when the photo was taken (camera). */
   capturedAt?: string
   /** When the file was uploaded to the server (always set on new uploads). */
@@ -92,6 +190,9 @@ export interface Image {
   timestamp?: string
   fileName?: string
   uploadedBy?: string
+  /** Legacy single upload note (API merges into `comments` for display). */
+  comment?: string
+  comments?: ImageComment[]
 }
 
 export type InvoiceStatus = 'pending' | 'paid'
@@ -126,6 +227,7 @@ export interface DashboardKPIs {
 export type AuditAction =
   | 'budget_updated'
   | 'task_created'
+  | 'project_created'
   | 'task_updated'
   | 'workflow_changed'
   | 'document_uploaded'
@@ -192,6 +294,8 @@ export interface ChangeRequest {
   title: string
   reason: string
   requester: string
+  /** Set when submitted from the app so approve/reject can notify the requester. */
+  requesterUserId?: string
   requestedAt: string
   impactScope?: string
   impactSchedule?: string
@@ -314,6 +418,11 @@ export interface Notification {
   targetUserId?: string
   read: boolean
   createdAt: string
+  /** Structured fields (e.g. task assignment) for richer UI; optional on older records. */
+  taskTitle?: string
+  projectName?: string
+  assignedByName?: string
+  dueDate?: string
 }
 
 export interface ProjectBaseline {

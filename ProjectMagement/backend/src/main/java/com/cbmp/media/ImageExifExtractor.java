@@ -18,10 +18,27 @@ import java.util.Map;
  */
 public final class ImageExifExtractor {
 
+    /**
+     * @param gpsExtracted      true when latitude/longitude were read from EXIF GPS
+     * @param capturedFromExif  true when {@code capturedAt} was read from EXIF date fields
+     */
+    public record ExifFlags(boolean gpsExtracted, boolean capturedFromExif) {
+        public static ExifFlags none() {
+            return new ExifFlags(false, false);
+        }
+    }
+
     private ImageExifExtractor() {
     }
 
-    public static void enrichImagePayload(Path imageFile, Map<String, Object> body) {
+    /**
+     * Fills {@code capturedAt}, {@code latitude}, {@code longitude} when present in the file.
+     *
+     * @return whether GPS and capture date came from EXIF (for client feedback after upload)
+     */
+    public static ExifFlags enrichImagePayload(Path imageFile, Map<String, Object> body) {
+        boolean gpsExtracted = false;
+        boolean capturedFromExif = false;
         try {
             Metadata metadata = ImageMetadataReader.readMetadata(imageFile.toFile());
 
@@ -36,6 +53,7 @@ public final class ImageExifExtractor {
                 }
                 if (taken != null) {
                     body.put("capturedAt", Instant.ofEpochMilli(taken.getTime()).toString());
+                    capturedFromExif = true;
                 }
             }
 
@@ -45,10 +63,12 @@ public final class ImageExifExtractor {
                 if (loc != null && !loc.isZero()) {
                     body.put("latitude", loc.getLatitude());
                     body.put("longitude", loc.getLongitude());
+                    gpsExtracted = true;
                 }
             }
         } catch (Exception ignored) {
             // PNG / no EXIF / corrupt: keep server defaults from caller
         }
+        return new ExifFlags(gpsExtracted, capturedFromExif);
     }
 }

@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface TaskRepository extends JpaRepository<TaskEntity, String> {
     List<TaskEntity> findByProjectIdOrderBySortOrderAscIdAsc(String projectId);
+
+    List<TaskEntity> findTop40ByOrderByCreatedAtDesc();
 }

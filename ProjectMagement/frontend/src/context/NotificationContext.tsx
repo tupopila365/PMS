@@ -18,6 +18,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { data: notifications = [], refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: notificationService.getNotifications,
+    /** So assignees see new task-assignment notifications without a full page reload. */
+    refetchInterval: 45_000,
+    refetchIntervalInBackground: false,
   })
 
   const unreadCount = notifications.filter((n) => !n.read).length

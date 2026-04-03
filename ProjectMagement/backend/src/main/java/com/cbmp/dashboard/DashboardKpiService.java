@@ -46,10 +46,33 @@ public class DashboardKpiService {
         this.riskRepository = riskRepository;
     }
 
-    public DashboardKpiDto aggregate() {
-        List<ProjectEntity> projects = projectRepository.findAll();
-        List<TaskEntity> tasks = taskRepository.findAll();
-        List<RiskEntity> risks = riskRepository.findAll();
+    /**
+     * @param allowedProjectIds projects the caller may see (company + discipline). When {@code projectIdFilter}
+     *                          is blank, KPIs are computed only over this set. Empty list yields zeroed KPIs.
+     */
+    public DashboardKpiDto aggregate(String projectIdFilter, List<String> allowedProjectIds) {
+        if (allowedProjectIds == null || allowedProjectIds.isEmpty()) {
+            return emptyKpiDto();
+        }
+        if (projectIdFilter == null || projectIdFilter.isBlank()) {
+            List<ProjectEntity> projects = projectRepository.findAllById(allowedProjectIds);
+            return aggregateAllFromProjects(projects);
+        }
+        String pid = projectIdFilter.trim();
+        if (!allowedProjectIds.contains(pid)) {
+            return emptyKpiDto();
+        }
+        return aggregateForProject(pid);
+    }
+
+    private DashboardKpiDto aggregateAllFromProjects(List<ProjectEntity> projects) {
+        List<String> projectIds = projects.stream().map(ProjectEntity::getId).toList();
+        List<TaskEntity> tasks = taskRepository.findAll().stream()
+                .filter(t -> t.getProjectId() != null && projectIds.contains(t.getProjectId()))
+                .toList();
+        List<RiskEntity> risks = riskRepository.findAll().stream()
+                .filter(r -> r.getProjectId() != null && projectIds.contains(r.getProjectId()))
+                .toList();
         Map<String, List<RiskEntity>> risksByProject = risks.stream().collect(Collectors.groupingBy(RiskEntity::getProjectId));
 
         long totalProjects = projects.size();
@@ -71,10 +94,16 @@ public class DashboardKpiService {
                 .filter(b -> b != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalPaid = paymentRepository.findAll().stream()
-                .map(PaymentEntity::getAmountPaid)
-                .filter(a -> a != null)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalPaid = BigDecimal.ZERO;
+        for (String pid : projectIds) {
+            for (InvoiceEntity inv : invoiceRepository.findByProjectId(pid)) {
+                for (PaymentEntity pay : paymentRepository.findByInvoiceId(inv.getId())) {
+                    if (pay.getAmountPaid() != null) {
+                        totalPaid = totalPaid.add(pay.getAmountPaid());
+                    }
+                }
+            }
+        }
 
         BigDecimal totalActualCost = BigDecimal.ZERO;
         for (ProjectEntity p : projects) {
@@ -95,6 +124,59 @@ public class DashboardKpiService {
                 outstanding,
                 variance
         );
+    }
+
+    private DashboardKpiDto aggregateForProject(String projectId) {
+        ProjectEntity project = projectRepository.findById(projectId).orElse(null);
+        if (project == null) {
+            return emptyKpiDto();
+        }
+
+        List<TaskEntity> tasks = taskRepository.findByProjectIdOrderBySortOrderAscIdAsc(projectId);
+        List<RiskEntity> risks = riskRepository.findByProjectId(projectId);
+        Map<String, List<RiskEntity>> risksByProject = Map.of(projectId, risks);
+
+        long totalProjects = 1;
+        long activeProjects = "active".equalsIgnoreCase(project.getStatus()) ? 1 : 0;
+
+        String level = riskLevelForProject(project, risks);
+        long onTrack = "low".equals(level) ? 1 : 0;
+        long atRisk = ("medium".equals(level) || "high".equals(level)) ? 1 : 0;
+
+        long completedTasks = tasks.stream().filter(t -> "completed".equals(t.getStatus())).count();
+        int completionRate = tasks.isEmpty() ? 0 : (int) Math.round((completedTasks * 100.0) / tasks.size());
+
+        BigDecimal totalBudget = project.getBudget() != null ? project.getBudget() : BigDecimal.ZERO;
+
+        BigDecimal totalPaid = BigDecimal.ZERO;
+        for (InvoiceEntity inv : invoiceRepository.findByProjectId(projectId)) {
+            for (PaymentEntity pay : paymentRepository.findByInvoiceId(inv.getId())) {
+                if (pay.getAmountPaid() != null) {
+                    totalPaid = totalPaid.add(pay.getAmountPaid());
+                }
+            }
+        }
+
+        BigDecimal totalActualCost = getProjectActualCost(projectId);
+        BigDecimal outstanding = totalBudget.subtract(totalPaid).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal variance = totalBudget.subtract(totalActualCost).setScale(2, RoundingMode.HALF_UP);
+
+        return new DashboardKpiDto(
+                totalProjects,
+                activeProjects,
+                onTrack,
+                atRisk,
+                completionRate,
+                totalBudget,
+                totalPaid,
+                outstanding,
+                variance
+        );
+    }
+
+    private static DashboardKpiDto emptyKpiDto() {
+        BigDecimal z = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        return new DashboardKpiDto(0, 0, 0, 0, 0, z, z, z, z);
     }
 
     private BigDecimal getProjectActualCost(String projectId) {

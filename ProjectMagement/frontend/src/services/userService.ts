@@ -7,6 +7,8 @@ export interface CreateUserPayload {
   role: UserRole
   password: string
   companyId?: string
+  /** Match project `type` for discipline-scoped roles (engineer, contractor, vendor). Leave empty for all types. */
+  discipline?: string | null
 }
 
 export interface UpdateUserPayload {
@@ -15,9 +17,14 @@ export interface UpdateUserPayload {
   role?: UserRole
   password?: string
   companyId?: string
+  discipline?: string | null
 }
 
 export const userService = {
+  /**
+   * Lists users for the given company. Non-admin callers are scoped to their JWT company on the server;
+   * passing `companyId` must match that company or the API returns 403.
+   */
   async getUsers(companyId?: string): Promise<User[]> {
     const params = companyId ? { companyId } : {}
     const { data } = await api.get<User[]>('/users', { params })

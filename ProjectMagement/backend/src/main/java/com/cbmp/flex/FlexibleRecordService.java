@@ -1,8 +1,12 @@
 package com.cbmp.flex;
 
+import com.cbmp.auth.JwtAuthFilter;
+import com.cbmp.notification.FlexibleRecordLifecycleNotifier;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,10 +21,33 @@ public class FlexibleRecordService {
 
     private final AppRecordRepository repository;
     private final ObjectMapper objectMapper;
+    private final FlexibleRecordLifecycleNotifier lifecycleNotifier;
 
-    public FlexibleRecordService(AppRecordRepository repository, ObjectMapper objectMapper) {
+    public FlexibleRecordService(
+            AppRecordRepository repository,
+            ObjectMapper objectMapper,
+            @Lazy FlexibleRecordLifecycleNotifier lifecycleNotifier
+    ) {
         this.repository = repository;
         this.objectMapper = objectMapper;
+        this.lifecycleNotifier = lifecycleNotifier;
+    }
+
+    public java.util.Optional<Map<String, Object>> findPayloadById(String id) {
+        return repository.findById(id).map(this::toMap);
+    }
+
+    @Transactional
+    public int replaceBoqLines(String projectId, java.util.List<Map<String, Object>> lines, JwtAuthFilter.AuthUser actor) {
+        repository.deleteByKindAndProjectId("boq_line", projectId);
+        int n = 0;
+        for (Map<String, Object> line : lines) {
+            Map<String, Object> copy = new LinkedHashMap<>(line);
+            copy.remove("id");
+            save("boq_line", projectId, copy, actor);
+            n++;
+        }
+        return n;
     }
 
     public List<Map<String, Object>> list(String kind, String projectId) {
@@ -66,6 +93,10 @@ public class FlexibleRecordService {
     }
 
     public Map<String, Object> save(String kind, String projectId, Map<String, Object> body) {
+        return save(kind, projectId, body, null);
+    }
+
+    public Map<String, Object> save(String kind, String projectId, Map<String, Object> body, JwtAuthFilter.AuthUser actor) {
         String id = body.get("id") != null ? body.get("id").toString() : UUID.randomUUID().toString();
         body.put("id", id);
         AppRecordEntity e = new AppRecordEntity();
@@ -77,12 +108,19 @@ public class FlexibleRecordService {
         } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
-        return toMap(repository.save(e));
+        Map<String, Object> result = toMap(repository.save(e));
+        lifecycleNotifier.afterSave(kind, result, actor);
+        return result;
     }
 
     public Map<String, Object> update(String id, Map<String, Object> body) {
+        return update(id, body, null);
+    }
+
+    public Map<String, Object> update(String id, Map<String, Object> body, JwtAuthFilter.AuthUser actor) {
         AppRecordEntity e = repository.findById(id).orElseThrow();
-        Map<String, Object> merged = toMap(e);
+        Map<String, Object> before = new LinkedHashMap<>(toMap(e));
+        Map<String, Object> merged = new LinkedHashMap<>(before);
         merged.putAll(body);
         merged.put("id", id);
         try {
@@ -90,7 +128,9 @@ public class FlexibleRecordService {
         } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
-        return toMap(repository.save(e));
+        Map<String, Object> after = toMap(repository.save(e));
+        lifecycleNotifier.afterUpdate(e.getKind(), before, after, actor);
+        return after;
     }
 
     public void delete(String id) {

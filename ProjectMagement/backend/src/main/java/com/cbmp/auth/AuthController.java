@@ -42,16 +42,23 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
         String token = jwtUtil.generateToken(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getCompanyId());
-        return ResponseEntity.ok(new LoginResponse(token, new UserDto(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getCompanyId())));
+        return ResponseEntity.ok(new LoginResponse(token, toUserDto(u)));
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserDto> me(@AuthenticationPrincipal JwtAuthFilter.AuthUser user) {
         if (user == null) return ResponseEntity.status(401).build();
-        return ResponseEntity.ok(new UserDto(user.id(), user.name(), user.email(), user.role(), user.companyId()));
+        return userRepository.findById(user.id())
+                .map(u -> ResponseEntity.ok(toUserDto(u)))
+                .orElse(ResponseEntity.status(401).build());
+    }
+
+    private static UserDto toUserDto(UserEntity u) {
+        String disc = u.getDiscipline();
+        return new UserDto(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getCompanyId(), disc != null ? disc : "");
     }
 
     record LoginRequest(String email, String password) {}
     record LoginResponse(String token, UserDto user) {}
-    record UserDto(String id, String name, String email, String role, String companyId) {}
+    record UserDto(String id, String name, String email, String role, String companyId, String discipline) {}
 }

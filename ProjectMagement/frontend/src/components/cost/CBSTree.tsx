@@ -7,7 +7,7 @@ function buildTree(categories: CostCategory[], parentId?: string): DataNode[] {
     .filter((c) => (parentId ? c.parentId === parentId : !c.parentId))
     .map((c) => ({
       key: c.id,
-      title: `${c.name} — Budget: $${c.budget.toLocaleString()} | Actual: $${c.actualCost.toLocaleString()}`,
+      title: `${c.name} — Estimated: $${c.budget.toLocaleString()} | Actual: $${c.actualCost.toLocaleString()}`,
       children: buildTree(categories, c.id),
     }))
 }

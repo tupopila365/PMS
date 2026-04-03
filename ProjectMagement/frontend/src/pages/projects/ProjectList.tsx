@@ -52,7 +52,13 @@ export function ProjectList() {
     { title: 'Client', dataIndex: 'client', key: 'client' },
     { title: 'Status', dataIndex: 'status', key: 'status', render: (status: string) => <Tag>{status || 'active'}</Tag> },
     { title: 'Risk', dataIndex: 'riskLevel', key: 'riskLevel', render: (r: RiskLevel) => r ? <Tag color={riskColors[r]}>{r}</Tag> : '-' },
-    { title: 'Budget', dataIndex: 'budget', key: 'budget', render: (r: number) => r ? `$${r.toLocaleString()}` : '-' },
+    { title: 'Est. cost', dataIndex: 'budget', key: 'budget', render: (r: number) => r ? `$${r.toLocaleString()}` : '-' },
+    {
+      title: 'Actual cost',
+      dataIndex: 'actualCost',
+      key: 'actualCost',
+      render: (r: number | undefined) => (r != null && r > 0 ? `$${r.toLocaleString()}` : '—'),
+    },
     { title: '', key: 'action', width: 80, render: (_: unknown, record: Project) => <Button type="link" size="small" onClick={() => navigate(`/projects/${record.id}`)}>View</Button> },
   ]
 
@@ -135,7 +141,10 @@ export function ProjectList() {
                         <Tag color={tagColorForProjectType(p.type)}>{formatProjectTypeLabel(p.type)}</Tag>
                         {p.riskLevel && <Tag color={riskColors[p.riskLevel]}>{p.riskLevel}</Tag>}
                       </div>
-                      {p.budget && <div className="mt-2 text-sm text-[var(--text-secondary)]">Budget: ${p.budget.toLocaleString()}</div>}
+                      {p.budget && <div className="mt-2 text-sm text-[var(--text-secondary)]">Estimated: ${p.budget.toLocaleString()}</div>}
+                      {p.actualCost != null && p.actualCost > 0 && (
+                        <div className="mt-1 text-sm text-[var(--text-secondary)]">Actual: ${p.actualCost.toLocaleString()}</div>
+                      )}
                     </div>
                   }
                 />

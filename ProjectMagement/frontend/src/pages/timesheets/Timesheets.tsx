@@ -15,7 +15,7 @@ import dayjs from 'dayjs'
 
 export function Timesheets() {
   const { user } = useAuth()
-  const companyId = user?.companyId || '1'
+  const companyId = user?.companyId
   const canRemind = user?.role === 'admin' || user?.role === 'project_manager'
 
   const { selectedProjectId, setSelectedProjectId } = useProjectContext()
@@ -48,6 +48,7 @@ export function Timesheets() {
   const { data: companyUsers = [] } = useQuery({
     queryKey: ['users', companyId],
     queryFn: () => userService.getUsers(companyId),
+    enabled: Boolean(companyId),
   })
 
   const createMutation = useMutation({

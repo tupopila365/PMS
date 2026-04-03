@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, Progress } from 'antd'
 import { projectService } from '../../services/projectService'
 import { riskService } from '../../services/riskService'
+import { useProjectContext } from '../../context/ProjectContext'
 import { getProjectRiskLevelFromRisks } from '../../utils/projectRisk'
 import type { RiskLevel } from '../../types'
 import { chartColorForProjectType, formatProjectTypeLabel } from '../../utils/projectType'
@@ -13,17 +15,23 @@ const riskColors: Record<RiskLevel, string> = {
 }
 
 export function PortfolioAnalytics() {
-  const { data: projects } = useQuery({
+  const { selectedProjectId } = useProjectContext()
+  const { data: projectsAll } = useQuery({
     queryKey: ['projects'],
     queryFn: projectService.getProjects,
   })
 
   const { data: risks = [] } = useQuery({
-    queryKey: ['risks'],
-    queryFn: () => riskService.getRisks(),
+    queryKey: ['risks', selectedProjectId],
+    queryFn: () => riskService.getRisks(selectedProjectId),
   })
 
-  const byType = (projects || []).reduce<Record<string, number>>(
+  const projects = useMemo(() => {
+    if (!selectedProjectId) return projectsAll || []
+    return (projectsAll || []).filter((p) => p.id === selectedProjectId)
+  }, [projectsAll, selectedProjectId])
+
+  const byType = projects.reduce<Record<string, number>>(
     (acc, p) => {
       acc[p.type] = (acc[p.type] || 0) + 1
       return acc
@@ -31,7 +39,7 @@ export function PortfolioAnalytics() {
     {}
   )
 
-  const byRisk = (projects || []).reduce<Record<RiskLevel, number>>(
+  const byRisk = projects.reduce<Record<RiskLevel, number>>(
     (acc, p) => {
       const level = getProjectRiskLevelFromRisks(risks, p.id, p.riskLevel) || 'low'
       acc[level] = (acc[level] || 0) + 1
@@ -57,31 +65,36 @@ export function PortfolioAnalytics() {
   return (
     <Card
       title="Portfolio Analytics"
+      className="rounded-md border border-[var(--border)] shadow-none"
       styles={{
-        header: { borderBottom: '1px solid var(--border)', background: 'var(--surface-muted)' },
+        header: {
+          borderBottom: '1px solid var(--border)',
+          background: 'var(--surface)',
+          fontWeight: 600,
+          fontSize: 14,
+        },
         body: { padding: '20px 24px' },
       }}
-      style={{ borderRadius: 12, boxShadow: 'var(--shadow-md)' }}
     >
       <div style={{ marginBottom: 24 }}>
-        <h4 style={{ marginBottom: 12 }}>Projects by Type</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] m-0 mb-3">Projects by Type</h4>
         {typeData.map(({ type, count, percent }) => (
           <div key={type} style={{ marginBottom: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div className="flex justify-between mb-1 text-sm text-[var(--text-primary)]">
               <span>{formatProjectTypeLabel(type)}</span>
-              <span>{count} projects</span>
+              <span className="text-[var(--text-secondary)] tabular-nums">{count} projects</span>
             </div>
             <Progress percent={percent} strokeColor={chartColorForProjectType(type)} showInfo={false} />
           </div>
         ))}
       </div>
       <div>
-        <h4 style={{ marginBottom: 12 }}>Risk Distribution</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] m-0 mb-3">Risk Distribution</h4>
         {riskData.map(({ level, count, percent }) => (
           <div key={level} style={{ marginBottom: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ textTransform: 'capitalize' }}>{level} Risk</span>
-              <span>{count} projects</span>
+            <div className="flex justify-between mb-1 text-sm text-[var(--text-primary)]">
+              <span className="capitalize">{level} risk</span>
+              <span className="text-[var(--text-secondary)] tabular-nums">{count} projects</span>
             </div>
             <Progress percent={percent} strokeColor={riskColors[level]} showInfo={false} />
           </div>

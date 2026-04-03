@@ -1,5 +1,5 @@
-export function exportProjectsToCSV(projects: { name: string; type: string; region?: string; client?: string; status?: string; budget?: number }[]) {
-  const headers = ['Name', 'Type', 'Region', 'Client', 'Status', 'Budget']
+export function exportProjectsToCSV(projects: { name: string; type: string; region?: string; client?: string; status?: string; budget?: number; actualCost?: number }[]) {
+  const headers = ['Name', 'Type', 'Region', 'Client', 'Status', 'Estimated cost', 'Actual cost']
   const rows = projects.map((p) => [
     p.name,
     p.type,
@@ -7,6 +7,7 @@ export function exportProjectsToCSV(projects: { name: string; type: string; regi
     p.client || '',
     p.status || '',
     p.budget?.toString() || '',
+    p.actualCost?.toString() || '',
   ])
   const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })

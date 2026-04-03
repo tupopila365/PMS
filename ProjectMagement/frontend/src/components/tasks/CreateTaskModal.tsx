@@ -1,7 +1,8 @@
-import { Modal, Form, Input, Select, Button, DatePicker } from 'antd'
+import { Modal, Form, Input, Select, Button, DatePicker, Switch } from 'antd'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { taskService } from '../../services/taskService'
 import { userService } from '../../services/userService'
+import { useAuth } from '../../context/AuthContext'
 import type { TaskStatus } from '../../types'
 import dayjs from 'dayjs'
 
@@ -20,9 +21,12 @@ interface CreateTaskModalProps {
 export function CreateTaskModal({ open, onClose, projectId }: CreateTaskModalProps) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const usersCompanyId = user?.companyId
   const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => userService.getUsers(),
+    queryKey: ['users', usersCompanyId],
+    queryFn: () => userService.getUsers(usersCompanyId),
+    enabled: Boolean(usersCompanyId),
   })
   const userOptions = users.map((u) => ({ value: u.id, label: u.name }))
 
@@ -43,6 +47,8 @@ export function CreateTaskModal({ open, onClose, projectId }: CreateTaskModalPro
       status: values.status || 'not_started',
       assignedTo: values.assignedTo?.length ? values.assignedTo : undefined,
       dueDate: values.dueDate ? values.dueDate.format('YYYY-MM-DD') : undefined,
+      sampleRequired: values.sampleRequired ?? false,
+      approvalRequired: values.approvalRequired ?? false,
     })
   }
 
@@ -60,6 +66,12 @@ export function CreateTaskModal({ open, onClose, projectId }: CreateTaskModalPro
         </Form.Item>
         <Form.Item name="dueDate" label="Due Date">
           <DatePicker style={{ width: '100%' }} />
+        </Form.Item>
+        <Form.Item name="sampleRequired" label="Sample required" valuePropName="checked" initialValue={false}>
+          <Switch />
+        </Form.Item>
+        <Form.Item name="approvalRequired" label="Approval required" valuePropName="checked" initialValue={false}>
+          <Switch />
         </Form.Item>
         <Form.Item>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

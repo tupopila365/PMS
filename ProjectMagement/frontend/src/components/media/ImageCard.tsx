@@ -1,6 +1,10 @@
-import { Card, Image } from 'antd'
-import { CalendarOutlined, CloudUploadOutlined, UserOutlined, EnvironmentOutlined } from '@ant-design/icons'
-import type { Image as ImageType } from '../../types'
+import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Card, Image, Input, message } from 'antd'
+import type { AxiosError } from 'axios'
+import { CalendarOutlined, CloudUploadOutlined, UserOutlined, EnvironmentOutlined, CommentOutlined } from '@ant-design/icons'
+import type { Image as ImageType, ImageComment } from '../../types'
+import { mediaService } from '../../services/mediaService'
 import { resolveApiUrl } from '../../utils/resolveApiUrl'
 
 const BROKEN_IMG =
@@ -33,14 +37,71 @@ interface ImageCardProps {
   image: ImageType
 }
 
+function commentLabel(c: ImageComment): string {
+  if (c.kind === 'upload_note') return 'Upload note'
+  return 'Comment'
+}
+
 export function ImageCard({ image }: ImageCardProps) {
+  const queryClient = useQueryClient()
+  const [draft, setDraft] = useState('')
+
+  const addComment = useMutation({
+    mutationFn: (text: string) => mediaService.addImageComment(image.id, text),
+    onSuccess: (updated) => {
+      setDraft('')
+      queryClient.setQueriesData<ImageType[]>({ queryKey: ['images'] }, (old) => {
+        if (!old) return old
+        return old.map((img) => (img.id === updated.id ? { ...img, ...updated } : img))
+      })
+      void queryClient.invalidateQueries({ queryKey: ['images'] })
+    },
+    onError: (err: Error) => {
+      const ax = err as AxiosError<{ message?: string; error?: string }>
+      const status = ax.response?.status
+      const body = ax.response?.data
+      const detail =
+        (typeof body?.message === 'string' && body.message) ||
+        (typeof body?.error === 'string' && body.error) ||
+        ax.message
+      if (status === 401) {
+        message.error('You must be logged in to comment.')
+      } else if (status === 404) {
+        message.error('Image not found. Try refreshing the page.')
+      } else if (status === 400) {
+        message.error(detail || 'Invalid comment.')
+      } else {
+        message.error(detail || 'Could not post comment. Check the API URL and network.')
+      }
+    },
+  })
+
   const src = imageSrc(image)
   const hasLocation = image.latitude != null && image.longitude != null
+  const thread = image.comments?.length
+    ? image.comments
+    : image.comment?.trim()
+      ? [
+          {
+            id: 'legacy',
+            text: image.comment.trim(),
+            authorName: image.uploadedBy || 'Uploader',
+            createdAt: image.uploadedAt || image.timestamp || '',
+            kind: 'upload_note',
+          } satisfies ImageComment,
+        ]
+      : []
 
-  // Photo taken = EXIF only (server field `capturedAt`)
+  // `capturedAt`: camera EXIF when capturedFromExif; else server fills with upload time for new uploads.
+  const takenFormatted = formatWhen(image.capturedAt)
   const photoTaken =
-    formatWhen(image.capturedAt) ||
-    'Not embedded in file (no EXIF date — e.g. PNG, screenshot, or metadata stripped)'
+    takenFormatted == null
+      ? 'Not embedded in file (no EXIF date — e.g. PNG, screenshot, or metadata stripped)'
+      : image.capturedFromExif === true
+        ? `${takenFormatted} (camera)`
+        : image.capturedFromExif === false
+          ? `${takenFormatted} (upload time — no camera date in file)`
+          : `${takenFormatted}`
 
   // Uploaded = server clock when the file hit CBMP
   const uploaded =
@@ -93,6 +154,49 @@ export function ImageCard({ image }: ImageCardProps) {
             <span>No GPS in file</span>
           </div>
         )}
+        <div className="mt-3 pt-2 border-t border-[var(--border-muted)]">
+          <div className="flex items-center gap-1.5 text-[var(--text-primary)]/90 font-medium text-xs mb-2">
+            <CommentOutlined />
+            Comments
+          </div>
+          {thread.length === 0 ? (
+            <p className="text-[var(--text-muted)] italic mb-2">No comments yet.</p>
+          ) : (
+            <ul className="space-y-2 mb-2 max-h-40 overflow-y-auto">
+              {thread.map((c) => (
+                <li key={c.id} className="text-xs rounded bg-[var(--surface-elevated)]/50 px-2 py-1.5">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0 text-[var(--text-muted)]">
+                    <span className="text-[var(--text-primary)] font-medium">{c.authorName}</span>
+                    <span className="opacity-80">{commentLabel(c)}</span>
+                    {c.createdAt ? (
+                      <span className="opacity-70">{formatWhen(c.createdAt) || c.createdAt}</span>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-[var(--text-primary)]">{c.text}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Input.TextArea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Add a comment…"
+            rows={2}
+            disabled={addComment.isPending}
+            className="text-xs"
+          />
+          <Button
+            type="primary"
+            htmlType="button"
+            size="small"
+            className="mt-2"
+            loading={addComment.isPending}
+            disabled={!draft.trim()}
+            onClick={() => addComment.mutate(draft.trim())}
+          >
+            Post comment
+          </Button>
+        </div>
       </div>
     </Card>
   )

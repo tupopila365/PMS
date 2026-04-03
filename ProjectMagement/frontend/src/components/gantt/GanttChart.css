@@ -1,4 +1,40 @@
-/* Gantt chart - refactored for size and ease on the eyes */
+/* Fill route outlet + floor height from viewport (parent is overflow-hidden on /tasks/gantt) */
+.gantt-view-page {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+.gantt-page-in-content {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  /* Fill flex slot from GanttView (outlet is overflow-hidden on /tasks/gantt) */
+  height: 100%;
+}
+
+/* Chart fills the Gantt route card */
+.gantt-page-in-content > .gantt-design-root {
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  width: 100%;
+}
+
+/* Gantt nested inside main content card (same shell as Task List table wrapper) — no double border */
+.gantt-page-in-content .gantt-chart-wrapper {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  min-width: 0;
+}
+
+/* Full-height Gantt: flex chain + library internals (_3eULf, _CZjuD, _2B2zv, _2k9Ys) */
 .gantt-chart-wrapper {
   --gantt-border: var(--border);
   --gantt-bg: var(--surface);
@@ -9,6 +45,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  width: 100%;
   background: var(--gantt-bg);
   border: 1px solid var(--gantt-border);
   border-radius: var(--radius-md);
@@ -16,16 +53,21 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Toolbar - view mode switcher */
 .gantt-chart-toolbar {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--gantt-border);
-  background: var(--gantt-bg-alt);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-muted);
+  background: var(--surface);
   flex-shrink: 0;
 }
 
 .gantt-chart-toolbar .ant-segmented {
-  background: var(--gantt-bg) !important;
+  background: var(--surface-muted) !important;
+  border-radius: var(--radius-sm) !important;
 }
 
 .gantt-chart-toolbar .ant-segmented-item {
@@ -34,154 +76,466 @@
 
 .gantt-chart-toolbar .ant-segmented-item-selected {
   color: var(--color-primary) !important;
-  background: rgba(37, 99, 235, 0.1) !important;
+  background: rgba(161, 98, 7, 0.16) !important;
+}
+
+[data-theme='dark'] .gantt-chart-toolbar .ant-segmented-item-selected {
+  background: rgba(212, 162, 11, 0.2) !important;
 }
 
 .gantt-chart-toolbar .ant-segmented-item:hover {
   color: var(--gantt-text) !important;
 }
 
-/* Main chart area - fills remaining space */
-.gantt-chart-inner {
+.gantt-chart-toolbar .ant-btn-default {
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+  background: var(--surface) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+.gantt-chart-toolbar .ant-btn-default:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--border)) !important;
+}
+
+.gantt-chart-body {
   flex: 1;
-  min-height: min(480px, calc(100vh - 320px));
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  position: relative;
   background: var(--gantt-bg);
 }
 
-.gantt-chart-inner > div {
+/* Mount: flex fill — height comes from parent chain; ResizeObserver reads clientHeight for ganttHeight */
+.gantt-chart-react-mount {
   flex: 1;
   min-height: 0;
-  overflow-x: auto;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) var(--gantt-bg-alt);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
-/* Scrollbar - modern, subtle */
-.gantt-chart-inner > div::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+/* gantt-task-react outer root: stack main row + bottom horizontal scrollbar — no height:100% (breaks internal layout) */
+.gantt-chart-body .gantt-chart-react-mount > div {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.gantt-chart-inner > div::-webkit-scrollbar-track {
+/* Main row: task list + timeline */
+.gantt-chart-body ._3eULf {
+  flex: 1;
+  min-height: 0 !important;
+  align-items: stretch;
+  overflow: hidden;
+  outline: none;
+}
+
+.gantt-chart-body ._3eULf:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Timeline column: calendar + scrollable grid (NOT the 1.2rem bottom strip) */
+.gantt-chart-body ._CZjuD {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  background: var(--gantt-bg);
+  overflow: hidden;
+}
+
+/* No border here — it sits outside the SVG’s fixed height and shifts the grid vs the task list */
+.gantt-chart-body ._CZjuD > svg:first-of-type {
+  flex-shrink: 0;
+  background: var(--surface);
+  display: block;
+  box-sizing: border-box;
+  box-shadow: 0 1px 0 0 var(--border-muted);
+}
+
+.gantt-chart-body ._CZjuD > svg text {
+  fill: var(--gantt-text-muted) !important;
+}
+
+.gantt-chart-body ._2B2zv {
+  flex: 1;
+  min-height: 0 !important;
+  overflow: auto !important;
+  background: var(--gantt-bg);
+}
+
+/* Bottom horizontal scrollbar strip — keep compact; do NOT flex-grow */
+.gantt-chart-body .gantt-chart-react-mount > div > ._2k9Ys {
+  flex-shrink: 0;
+  flex-grow: 0 !important;
+  height: 1.25rem !important;
+  min-height: 1.25rem !important;
+  max-height: 2rem !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
   background: var(--gantt-bg-alt);
 }
 
-.gantt-chart-inner > div::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 5px;
+.gantt-chart-body .gantt-chart-react-mount > div > ._2k9Ys::-webkit-scrollbar {
+  height: 10px;
 }
 
-.gantt-chart-inner > div::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+/* Inner width driver for horizontal scroll */
+.gantt-chart-body ._19jgW {
+  height: 1px !important;
 }
 
-/* Task list - theme-aware, generous spacing */
-.gantt-chart-inner ._34SS0 {
+.gantt-task-list-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px 104px;
+  column-gap: 12px;
+  align-items: center;
+  box-sizing: border-box;
+  /* Match calendar SVG height only; vertical padding would desync row lines */
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border-muted);
+  background: var(--surface);
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+.gantt-task-list-header__name {
+  padding-right: 8px;
+}
+
+.gantt-task-list-table {
+  background: var(--gantt-bg);
+}
+
+.gantt-task-list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px 104px;
+  column-gap: 12px;
+  align-items: center;
+  box-sizing: border-box;
+  /* Height is set inline to rowHeight; avoid vertical padding so it matches grid rows */
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border-muted);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.gantt-task-list-row:nth-child(even) {
+  background: color-mix(in srgb, var(--gantt-bg-alt) 55%, var(--gantt-bg));
+}
+
+.gantt-task-list-row:hover {
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--gantt-bg));
+}
+
+.gantt-task-list-row.selected {
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--gantt-bg));
+}
+
+.gantt-task-list-cell {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--gantt-text);
+  overflow: hidden;
+}
+
+.gantt-task-list-cell--name {
+  font-weight: 500;
+  min-width: 0;
+  padding-right: 4px;
+}
+
+.gantt-task-list-cell--date {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.gantt-task-list-cell__content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.gantt-task-list-cell__content > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gantt-task-list-expander {
+  flex-shrink: 0;
+  width: 18px;
+  font-size: 10px;
+  color: var(--gantt-text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Default library task list cells (fallback) */
+.gantt-chart-body ._34SS0 {
   background-color: var(--gantt-bg) !important;
   color: var(--gantt-text) !important;
 }
 
-.gantt-chart-inner ._34SS0:nth-of-type(even) {
+.gantt-chart-body ._34SS0:nth-of-type(even) {
   background-color: var(--gantt-bg-alt) !important;
-  color: var(--gantt-text) !important;
 }
 
-.gantt-chart-inner ._3lLk3 {
+.gantt-chart-body ._3lLk3 {
   color: var(--gantt-text) !important;
   font-size: 13px !important;
   padding: 0 16px !important;
 }
 
-.gantt-chart-inner ._3ZbQT {
+.gantt-chart-body ._3ZbQT {
   background: var(--gantt-bg) !important;
   border-color: var(--gantt-border) !important;
 }
 
-.gantt-chart-inner ._3_ygE {
+.gantt-chart-body ._3_ygE {
   background: var(--gantt-bg-alt) !important;
   border-color: var(--gantt-border) !important;
 }
 
-.gantt-chart-inner ._WuQ0f {
+.gantt-chart-body ._WuQ0f {
   color: var(--gantt-text-muted) !important;
   padding: 0 16px !important;
   font-size: 12px !important;
   font-weight: 600 !important;
 }
 
-.gantt-chart-inner ._2QjE6,
-.gantt-chart-inner ._2TfEi {
+.gantt-chart-body ._2QjE6,
+.gantt-chart-body ._2TfEi {
   color: var(--gantt-text-muted) !important;
   font-size: 11px !important;
 }
 
-/* Timeline grid - soft, theme-consistent */
-.gantt-chart-inner [fill="#f5f5f5"],
-.gantt-chart-inner [fill="#fff"],
-.gantt-chart-inner [fill="#ffffff"] {
+/* Grid / bars SVG */
+.gantt-chart-body ._2B2zv svg {
+  background: var(--gantt-bg);
+}
+
+.gantt-chart-body [fill='#f5f5f5'],
+.gantt-chart-body [fill='#fff'],
+.gantt-chart-body [fill='#ffffff'] {
   fill: var(--gantt-bg) !important;
 }
 
-.gantt-chart-inner [fill="#f5f5f5"]:nth-of-type(even),
-.gantt-chart-inner rect[fill="#f5f5f5"] {
+.gantt-chart-body [fill='#f5f5f5']:nth-of-type(even),
+.gantt-chart-body rect[fill='#f5f5f5'] {
   fill: var(--gantt-bg-alt) !important;
 }
 
-.gantt-chart-inner [stroke="#ebeff2"],
-.gantt-chart-inner [stroke="#e6e4e4"],
-.gantt-chart-inner [stroke="#e0e0e0"] {
+.gantt-chart-body [stroke='#ebeff2'],
+.gantt-chart-body [stroke='#e6e4e4'],
+.gantt-chart-body [stroke='#e0e0e0'] {
   stroke: var(--gantt-border) !important;
 }
 
-.gantt-chart-inner [fill="#333"] {
+.gantt-chart-body [fill='#333'] {
   fill: var(--gantt-text) !important;
 }
 
-.gantt-chart-inner [fill="#555"],
-.gantt-chart-inner [fill="#666"] {
+.gantt-chart-body [fill='#555'],
+.gantt-chart-body [fill='#666'] {
   fill: var(--gantt-text-muted) !important;
 }
 
-.gantt-chart-inner [style*="background: #fff"],
-.gantt-chart-inner [style*="background:#fff"] {
+.gantt-chart-body [style*='background: #fff'],
+.gantt-chart-body [style*='background:#fff'] {
   background: var(--gantt-bg) !important;
 }
 
-.gantt-chart-inner [style*="color: #666"],
-.gantt-chart-inner [style*="color:#666"],
-.gantt-chart-inner [style*="color: rgb(86"],
-.gantt-chart-inner [style*="color:rgb(86"] {
+.gantt-chart-body [style*='color: #666'],
+.gantt-chart-body [style*='color:#666'],
+.gantt-chart-body [style*='color: rgb(86'],
+.gantt-chart-body [style*='color:rgb(86'] {
   color: var(--gantt-text-muted) !important;
 }
 
-.gantt-chart-inner table {
+.gantt-chart-body table {
   border-color: var(--gantt-border) !important;
 }
 
-.gantt-chart-inner [style*="border"] {
+.gantt-chart-body [style*='border'] {
   border-color: var(--gantt-border) !important;
 }
 
-.gantt-chart-inner thead th {
+.gantt-chart-body thead th {
   background: var(--gantt-bg-alt) !important;
   font-weight: 600 !important;
   color: var(--gantt-text) !important;
   font-size: 13px !important;
 }
 
-.gantt-chart-inner tbody td:first-child {
+.gantt-chart-body tbody td:first-child {
   font-weight: 500;
   color: var(--gantt-text);
 }
 
-/* Tooltip */
-.gantt-chart-inner [class*="tooltip"] {
-  background: var(--surface-elevated) !important;
-  color: var(--gantt-text) !important;
-  border: 1px solid var(--gantt-border);
-  box-shadow: var(--shadow-md);
+/* Library SVG grid uses class-based fills (not inline fill="#fff") */
+.gantt-chart-body ._2dZTy {
+  fill: var(--gantt-bg) !important;
+}
+
+.gantt-chart-body ._2dZTy:nth-child(even) {
+  fill: var(--gantt-bg-alt) !important;
+}
+
+.gantt-chart-body ._3rUKi,
+.gantt-chart-body ._RuwuK,
+.gantt-chart-body ._1rLuZ {
+  stroke: var(--gantt-border) !important;
+}
+
+.gantt-chart-body ._9w8d5 {
+  fill: var(--gantt-text) !important;
+}
+
+.gantt-chart-body ._2q1Kt {
+  fill: var(--gantt-text-muted) !important;
+}
+
+.gantt-chart-body ._35nLX {
+  fill: var(--gantt-bg) !important;
+  stroke: var(--gantt-border) !important;
+}
+
+/* —— Design themes (toolbar + surfaces; bar colours from ganttDesign.ts) —— */
+.gantt-chart-toolbar__design {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gantt-chart-toolbar__design-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.gantt-chart-toolbar--design-only {
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* 1 — Control room: near-black canvas, cyan accents, technical headers */
+.gantt-design-root[data-gantt-design='control-room'] .gantt-chart-wrapper {
+  --gantt-bg: #09090b;
+  --gantt-bg-alt: #111114;
+  --gantt-border: #27272f;
+  --gantt-text: #f4f4f5;
+  --gantt-text-muted: #71717a;
+}
+
+.gantt-design-root[data-gantt-design='control-room'] .gantt-chart-toolbar {
+  background: #0c0c0f;
+  border-bottom-color: #27272f;
+  padding-block: 8px;
+}
+
+.gantt-design-root[data-gantt-design='control-room'] .gantt-chart-toolbar .ant-btn-default {
+  border-radius: 4px !important;
+}
+
+.gantt-design-root[data-gantt-design='control-room'] .gantt-task-list-header {
+  background: #0c0c0f;
+  border-bottom-color: #27272f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.gantt-design-root[data-gantt-design='control-room'] .gantt-chart-body ._CZjuD > svg:first-of-type {
+  background: #0c0c0f;
+  box-shadow: 0 1px 0 0 #27272f;
+}
+
+.gantt-design-root[data-gantt-design='control-room'] .gantt-chart-body ._3rUKi,
+.gantt-design-root[data-gantt-design='control-room'] .gantt-chart-body ._RuwuK,
+.gantt-design-root[data-gantt-design='control-room'] .gantt-chart-body ._1rLuZ {
+  stroke: #3f3f46 !important;
+  opacity: 0.65;
+}
+
+/* 2 — Soft: gentle gradient, rounded chrome, calm list */
+.gantt-design-root[data-gantt-design='soft'] .gantt-chart-toolbar .ant-segmented {
+  border-radius: 999px !important;
+}
+
+.gantt-design-root[data-gantt-design='soft'] .gantt-chart-toolbar .ant-segmented-item {
+  border-radius: 999px !important;
+}
+
+.gantt-design-root[data-gantt-design='soft'] .gantt-chart-body {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-muted) 42%, var(--surface)) 0%,
+    var(--gantt-bg) 38%,
+    var(--gantt-bg) 100%
+  );
+}
+
+.gantt-design-root[data-gantt-design='soft'] .gantt-chart-toolbar {
+  background: color-mix(in srgb, var(--surface) 88%, var(--surface-muted));
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--border) 45%, transparent);
+}
+
+.gantt-design-root[data-gantt-design='soft'] .gantt-task-list-header {
+  background: color-mix(in srgb, var(--surface) 75%, var(--surface-muted));
+}
+
+.gantt-design-root[data-gantt-design='soft'] .gantt-task-list-row:nth-child(even) {
+  background: color-mix(in srgb, var(--surface-muted) 32%, var(--surface));
+}
+
+/* 3 — Editorial: warm base, strong type, primary rule under headers */
+.gantt-design-root[data-gantt-design='editorial'] .gantt-chart-wrapper {
+  --gantt-bg: color-mix(in srgb, var(--surface) 94%, #e7e5e0);
+  --gantt-bg-alt: color-mix(in srgb, var(--surface-muted) 70%, #dcd6cf);
+}
+
+[data-theme='dark'] .gantt-design-root[data-gantt-design='editorial'] .gantt-chart-wrapper {
+  --gantt-bg: #1c1b19;
+  --gantt-bg-alt: #252422;
+}
+
+.gantt-design-root[data-gantt-design='editorial'] .gantt-task-list-header {
+  font-weight: 800;
+  font-size: 0.8125rem;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  border-bottom: 2px solid var(--color-primary);
+  background: var(--gantt-bg);
+}
+
+/* Shadow only — a real border on the SVG adds height and misaligns horizontal rules */
+.gantt-design-root[data-gantt-design='editorial'] .gantt-chart-body ._CZjuD > svg:first-of-type {
+  background: var(--gantt-bg);
+  box-shadow: 0 2px 0 0 var(--color-primary);
+}
+
+.gantt-design-root[data-gantt-design='editorial'] .gantt-task-list-cell--name {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.gantt-design-root[data-gantt-design='editorial'] .gantt-chart-toolbar {
+  background: var(--gantt-bg);
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 22%, var(--border-muted));
 }

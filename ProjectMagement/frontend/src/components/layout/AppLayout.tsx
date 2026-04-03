@@ -31,6 +31,7 @@ import { useNotifications } from '../../context/NotificationContext'
 import { useTheme } from '../../theme/ThemeContext'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { RouteGuard } from '../auth/RouteGuard'
+import { NotificationListItem } from '../notifications/NotificationListItem'
 
 const { Header, Sider, Content } = Layout
 
@@ -40,6 +41,7 @@ function buildMenuItems(can: (p: import('../../utils/permissions').Permission) =
   if (can('portfolio:view')) {
     items.push({ key: '/portfolio', icon: <AppstoreOutlined />, label: 'Project Portfolio' })
     items.push({ key: '/portfolio/pipeline', icon: <ProjectOutlined />, label: 'Pipeline' })
+    items.push({ key: '/portfolio/boq-compare', icon: <FileOutlined />, label: 'BOQ compare' })
   }
   if (can('projects:view')) items.push({ key: '/projects', icon: <ProjectOutlined />, label: 'Projects' })
   if (can('tasks:view')) {
@@ -61,15 +63,18 @@ function buildMenuItems(can: (p: import('../../utils/permissions').Permission) =
   if (can('media:view')) items.push({ key: '/media', icon: <PictureOutlined />, label: 'Media' })
   if (can('documents:view')) items.push({ key: '/documents', icon: <FileOutlined />, label: 'Documents' })
   if (can('finance:view')) {
-    items.push({
-      key: 'finance',
-      icon: <DollarOutlined />,
-      label: 'Finance',
-      children: [
-        ...(can('finance:invoices') ? [{ key: '/finance/invoices', label: 'Invoices' }] : []),
-        ...(can('finance:payments') ? [{ key: '/finance/payments', label: 'Payments' }] : []),
-      ].filter(Boolean) as { key: string; label: string }[],
-    })
+    const financeChildren = [
+      ...(can('finance:invoices') ? [{ key: '/finance/invoices', label: 'Invoices' }] : []),
+      ...(can('finance:payments') ? [{ key: '/finance/payments', label: 'Payments' }] : []),
+    ] as { key: string; label: string }[]
+    if (financeChildren.length > 0) {
+      items.push({
+        key: 'finance',
+        icon: <DollarOutlined />,
+        label: 'Finance',
+        children: financeChildren,
+      })
+    }
   }
   if (can('reports:view')) items.push({ key: '/reports', icon: <BarChartOutlined />, label: 'Reports' })
   if (can('admin:company') || can('admin:users') || can('admin:roles') || can('admin:subscription')) {
@@ -88,10 +93,45 @@ function buildMenuItems(can: (p: import('../../utils/permissions').Permission) =
   return items
 }
 
+/** Human-readable crumb titles for URL segments (falls back to Title Case). */
+const BREADCRUMB_SEGMENT_LABELS: Record<string, string> = {
+  dashboard: 'Dashboard',
+  portfolio: 'Project Portfolio',
+  pipeline: 'Pipeline',
+  'boq-compare': 'BOQ compare',
+  projects: 'Projects',
+  tasks: 'Tasks',
+  board: 'Board',
+  gantt: 'Gantt',
+  network: 'Network',
+  risks: 'Risks',
+  changes: 'Change Log',
+  timesheets: 'Timesheets',
+  media: 'Media',
+  gallery: 'Gallery',
+  documents: 'Documents',
+  finance: 'Finance',
+  invoices: 'Invoices',
+  payments: 'Payments',
+  reports: 'Reports',
+  admin: 'Admin',
+  company: 'Company',
+  users: 'Users',
+  roles: 'Role Permissions',
+  subscription: 'Subscription',
+  new: 'New',
+}
+
+function formatBreadcrumbSegment(seg: string): string {
+  const mapped = BREADCRUMB_SEGMENT_LABELS[seg.toLowerCase()]
+  if (mapped) return mapped
+  return seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, ' ')
+}
+
 function getBreadcrumbs(pathname: string) {
   const segments = pathname.split('/').filter(Boolean)
   return segments.map((seg, i) => ({
-    title: seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, ' '),
+    title: formatBreadcrumbSegment(seg),
     path: '/' + segments.slice(0, i + 1).join('/'),
   }))
 }
@@ -104,8 +144,16 @@ function AppLayoutInner() {
   const { user, logout } = useAuth()
   const { can } = usePermissions()
   const { toggleTheme, isDark } = useTheme()
-  const { notifications, unreadCount, markRead, markAllRead } = useNotifications()
+  const { notifications, markRead, markAllRead } = useNotifications()
   const { selectedProjectId, setSelectedProjectId } = useProjectContext()
+  const filteredNotifications = useMemo(() => {
+    if (!selectedProjectId) return notifications
+    return notifications.filter((n) => !n.projectId || n.projectId === selectedProjectId)
+  }, [notifications, selectedProjectId])
+  const filteredUnreadCount = useMemo(
+    () => filteredNotifications.filter((n) => !n.read).length,
+    [filteredNotifications],
+  )
   const menuItems = useMemo(() => buildMenuItems(can), [can])
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
@@ -114,6 +162,8 @@ function AppLayoutInner() {
 
   const selectedKey = location.pathname === '/' ? '/dashboard' : location.pathname
   const breadcrumbs = getBreadcrumbs(location.pathname)
+  /** Gantt needs a non-scrolling outlet so flex + ResizeObserver get a real height (scroll stays inside the chart). */
+  const isGanttPage = location.pathname === '/tasks/gantt'
 
   // Keep collapsed on mobile when resizing
   useEffect(() => {
@@ -141,10 +191,10 @@ function AppLayoutInner() {
         collapsed={collapsed}
         width={240}
         collapsedWidth={72}
-        className="app-layout-sider !bg-[#0f172a] border-r border-[#1e293b]"
+        className="app-layout-sider"
       >
         <div className="flex flex-col h-full min-h-0 max-h-[100vh]">
-          <div className="h-16 flex items-center justify-center text-white font-semibold text-lg shrink-0 border-b border-[#1e293b]/60">
+          <div className="app-layout-sider-brand h-16 flex items-center justify-center font-semibold text-lg shrink-0 border-b border-[var(--sider-border)] text-[#fafaf9]">
             {collapsed ? (
               <span className="text-sm">CBMP</span>
             ) : (
@@ -161,34 +211,40 @@ function AppLayoutInner() {
             onClick={({ key }) => {
               if (!key.startsWith('/')) return
               navigate(key)
+              if (isMobile) setCollapsed(true)
             }}
-            className="mt-2 border-none bg-transparent pb-4 [&_.ant-menu-item]:rounded-lg [&_.ant-menu-item]:mx-2 [&_.ant-menu-submenu-title]:rounded-lg [&_.ant-menu-submenu-title]:mx-2 [&_.ant-menu-item-selected]:bg-primary/20 [&_.ant-menu-item-selected]:text-white"
+            className="app-layout-sider-menu mt-2 border-none bg-transparent pb-4 [&_.ant-menu-item]:rounded-lg [&_.ant-menu-item]:mx-2 [&_.ant-menu-submenu-title]:rounded-lg [&_.ant-menu-submenu-title]:mx-2"
             style={{ background: 'transparent' }}
           />
           </nav>
         </div>
       </Sider>
-      <Layout className="flex-1 min-w-0 min-h-0 h-screen flex flex-col overflow-hidden">
-        <Header className="h-16 shrink-0 px-6 flex items-center justify-between bg-[var(--surface)] border-b border-[var(--border)] shadow-sm">
-          <div className="flex items-center gap-4 flex-wrap">
-            <Select
-              placeholder="Project filter"
-              allowClear
-              className="min-w-[180px]"
-              value={selectedProjectId}
-              onChange={setSelectedProjectId}
-              options={[{ label: 'All Projects', value: undefined }, ...projects.map((p) => ({ label: p.name, value: p.id }))]}
-            />
-            <button
-              type="button"
-              onClick={() => setCollapsed((c) => !c)}
-              className="p-2 rounded-lg hover:bg-[var(--surface-muted)] transition-colors text-[var(--text-secondary)]"
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {collapsed ? <MenuUnfoldOutlined className="text-lg" /> : <MenuFoldOutlined className="text-lg" />}
-            </button>
+      <Layout className="flex-1 min-w-0 min-h-0 h-screen max-h-screen flex flex-col overflow-hidden w-full pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]">
+        <Header className="shrink-0 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:h-16 sm:gap-0 bg-[var(--surface)] border-b border-[var(--border)] shadow-sm px-3 sm:px-5 lg:px-6 py-3 sm:py-0 [padding-top:max(0.75rem,env(safe-area-inset-top,0px))]">
+          <div className="flex flex-col gap-2 w-full min-w-0 sm:flex-row sm:items-center sm:flex-wrap sm:gap-3 lg:gap-4">
+            <div className="flex items-center gap-2 w-full min-w-0 sm:w-auto sm:flex-1 sm:min-w-[200px] sm:max-w-xl">
+              <button
+                type="button"
+                onClick={() => setCollapsed((c) => !c)}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-[var(--surface-muted)] transition-colors text-[var(--text-secondary)] touch-manipulation"
+                aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {collapsed ? <MenuUnfoldOutlined className="text-lg" /> : <MenuFoldOutlined className="text-lg" />}
+              </button>
+              <Select
+                placeholder="Project filter"
+                allowClear
+                className="flex-1 min-w-0 sm:min-w-[160px] sm:flex-initial sm:w-[min(100%,280px)]"
+                value={selectedProjectId}
+                onChange={setSelectedProjectId}
+                options={[{ label: 'All Projects', value: undefined }, ...projects.map((p) => ({ label: p.name, value: p.id }))]}
+                popupMatchSelectWidth={false}
+                styles={{ popup: { root: { maxWidth: 'min(100vw - 24px, 320px)' } } }}
+              />
+            </div>
             {!isMobile && (
             <Breadcrumb
+              className="min-w-0 [&_.ant-breadcrumb-separator]:mx-1"
               items={breadcrumbs.map((b, i) => ({
                 title:
                   i < breadcrumbs.length - 1 ? (
@@ -209,21 +265,21 @@ function AppLayoutInner() {
             />
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0 w-full sm:w-auto [padding-bottom:env(safe-area-inset-bottom,0px)] sm:pb-0">
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-[var(--surface-muted)] transition-colors text-[var(--text-secondary)]"
+              className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-[var(--surface-muted)] transition-colors text-[var(--text-secondary)] touch-manipulation"
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? <SunOutlined className="text-lg" /> : <MoonOutlined className="text-lg" />}
             </button>
             <Dropdown
               dropdownRender={() => (
-                <div className="bg-[var(--surface)] rounded-xl shadow-lg min-w-[320px] max-h-[400px] overflow-auto border border-[var(--border)]">
+                <div className="bg-[var(--surface)] rounded-xl shadow-lg w-[min(calc(100vw-1.5rem),360px)] sm:min-w-[300px] max-h-[min(70vh,400px)] overflow-auto border border-[var(--border)]">
                   <div className="p-3 border-b border-[var(--border)] flex justify-between items-center">
                     <span className="font-semibold text-[var(--text-primary)]">Notifications</span>
-                    {unreadCount > 0 && (
+                    {filteredUnreadCount > 0 && (
                       <button
                         type="button"
                         onClick={() => markAllRead()}
@@ -233,23 +289,11 @@ function AppLayoutInner() {
                       </button>
                     )}
                   </div>
-                  {notifications.length === 0 ? (
+                  {filteredNotifications.length === 0 ? (
                     <div className="p-6 text-center text-[var(--text-muted)]">No notifications</div>
                   ) : (
-                    notifications.slice(0, 8).map((n) => (
-                      <button
-                        key={n.id}
-                        type="button"
-                        onClick={() => markRead(n.id)}
-                        className={`w-full text-left p-3 border-b border-[var(--border-muted)] cursor-pointer transition-colors hover:bg-[var(--surface-muted)] ${
-                          !n.read ? 'bg-primary/5' : ''
-                        }`}
-                      >
-                        <div className={`${n.read ? 'font-normal' : 'font-semibold'} text-[var(--text-primary)]`}>
-                          {n.title}
-                        </div>
-                        <div className="text-sm text-[var(--text-secondary)] mt-0.5">{n.message}</div>
-                      </button>
+                    filteredNotifications.slice(0, 8).map((n) => (
+                      <NotificationListItem key={n.id} n={n} onMarkRead={markRead} />
                     ))
                   )}
                 </div>
@@ -258,10 +302,10 @@ function AppLayoutInner() {
             >
               <button
                 type="button"
-                className="p-2 rounded-lg hover:bg-[var(--surface-muted)] transition-colors text-[var(--text-secondary)] relative"
+                className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-[var(--surface-muted)] transition-colors text-[var(--text-secondary)] relative touch-manipulation"
                 aria-label="Notifications"
               >
-                <Badge count={unreadCount} size="small">
+                <Badge count={filteredUnreadCount} size="small">
                   <BellOutlined className="text-lg" />
                 </Badge>
               </button>
@@ -269,7 +313,7 @@ function AppLayoutInner() {
             <Dropdown menu={userMenu} placement="bottomRight">
               <button
                 type="button"
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
+                className="flex items-center gap-2 min-h-11 px-2 py-1.5 rounded-lg hover:bg-[var(--surface-muted)] transition-colors cursor-pointer touch-manipulation"
               >
                 <Avatar size="small" icon={<UserOutlined />} className="bg-primary" />
                 <span className="text-sm font-medium text-[var(--text-primary)] hidden sm:inline">{user?.name}</span>
@@ -277,9 +321,23 @@ function AppLayoutInner() {
             </Dropdown>
           </div>
         </Header>
-        <Content className="flex-1 min-h-0 overflow-y-auto overscroll-contain m-6 p-6 bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm">
+        <Content
+          className={
+            isGanttPage
+              ? 'flex-1 min-h-0 flex flex-col overflow-hidden overscroll-contain m-2 p-3 sm:m-4 sm:p-4 md:m-5 md:p-5 bg-[var(--surface)] rounded-lg sm:rounded-xl border border-[var(--border)] shadow-sm min-w-0 mb-[max(0.5rem,env(safe-area-inset-bottom,0px))]'
+              : 'flex-1 min-h-0 flex flex-col overflow-hidden overscroll-contain m-2 p-3 sm:m-4 sm:p-5 md:m-6 md:p-6 bg-[var(--surface)] rounded-lg sm:rounded-xl border border-[var(--border)] shadow-sm min-w-0 mb-[max(0.5rem,env(safe-area-inset-bottom,0px))]'
+          }
+        >
           <RouteGuard>
-            <Outlet />
+            <div
+              className={
+                isGanttPage
+                  ? 'flex-1 min-h-0 min-w-0 flex flex-col overflow-hidden'
+                  : 'flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden min-w-0'
+              }
+            >
+              <Outlet />
+            </div>
           </RouteGuard>
         </Content>
       </Layout>

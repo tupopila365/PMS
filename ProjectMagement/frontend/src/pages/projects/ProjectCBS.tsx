@@ -32,7 +32,7 @@ export function ProjectCBS() {
     <div>
       <PageHeader
         title="Cost Breakdown Structure"
-        subtitle={project?.name ? `${project.name} — Total: $${totalBudget.toLocaleString()} | Actual: $${totalActual.toLocaleString()}` : undefined}
+        subtitle={project?.name ? `${project.name} — Estimated: $${totalBudget.toLocaleString()} | Actual: $${totalActual.toLocaleString()}` : undefined}
         leading={
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/projects/${id}`)}>
             Back

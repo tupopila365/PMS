@@ -15,6 +15,9 @@ public record TaskUpsertRequest(
         List<String> predecessors,
         String parentId,
         Integer order,
-        Boolean isMilestone
+        Boolean isMilestone,
+        Boolean sampleRequired,
+        Boolean approvalRequired,
+        Boolean archived
 ) {
 }

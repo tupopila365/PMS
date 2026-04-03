@@ -25,7 +25,7 @@ const PLAN_COLORS: Record<PlanTier, string> = {
 
 export function SubscriptionSettings() {
   const { user } = useAuth()
-  const companyId = user?.companyId || '1'
+  const companyId = user?.companyId
 
   const { data: company, isLoading: companyLoading } = useQuery({
     queryKey: ['company', companyId],

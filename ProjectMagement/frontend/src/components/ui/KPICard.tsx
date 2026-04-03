@@ -1,28 +1,12 @@
-import { Card, Statistic } from 'antd'
-import { tokens } from '../../theme/tokens'
+import { Card } from 'antd'
 
-const variantStyles = {
-  default: {
-    accentColor: tokens.colors.primary,
-    iconBg: tokens.colors.primaryLight,
-    iconColor: tokens.colors.primary,
-  },
-  success: {
-    accentColor: tokens.colors.success,
-    iconBg: tokens.colors.successLight,
-    iconColor: tokens.colors.success,
-  },
-  warning: {
-    accentColor: tokens.colors.warning,
-    iconBg: tokens.colors.warningLight,
-    iconColor: tokens.colors.warning,
-  },
-  danger: {
-    accentColor: tokens.colors.danger,
-    iconBg: tokens.colors.dangerLight,
-    iconColor: tokens.colors.danger,
-  },
-}
+/** Subdued icon tint — classic dashboards avoid loud accent blocks. */
+const variantIconClass = {
+  default: 'text-[var(--text-secondary)]',
+  success: 'text-[var(--text-secondary)] dark:text-emerald-500/85',
+  warning: 'text-[var(--text-secondary)] dark:text-amber-500/85',
+  danger: 'text-red-700 dark:text-red-400/90',
+} as const
 
 interface KPICardProps {
   title: string
@@ -43,43 +27,37 @@ export function KPICard({
   onClick,
   formatter,
 }: KPICardProps) {
-  const styles = variantStyles[variant]
+  const iconClass = variantIconClass[variant]
 
-  const iconWithBadge = prefix ? (
-    <span
-      className="inline-flex items-center justify-center w-10 h-10 rounded-[10px] mr-3 text-lg"
-      style={{
-        background: styles.iconBg,
-        color: styles.iconColor,
-      }}
-    >
-      {prefix}
-    </span>
-  ) : null
+  const displayValue = formatter ? formatter(value) : value
 
   return (
     <Card
       hoverable={!!onClick}
       onClick={onClick}
-      className={`rounded-xl overflow-hidden transition-all duration-200 ${
-        onClick ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-lg' : ''
+      className={`rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-none ${
+        onClick ? 'cursor-pointer hover:border-[var(--border-strong)]' : ''
       }`}
-      style={{
-        borderLeft: `4px solid ${styles.accentColor}`,
-        boxShadow: tokens.shadows.md,
-      }}
       styles={{
-        body: { padding: '20px 24px', overflow: 'hidden', minWidth: 0 },
+        body: { padding: '16px 18px', overflow: 'hidden', minWidth: 0 },
       }}
     >
-      <Statistic
-        title={title}
-        value={value}
-        prefix={iconWithBadge}
-        suffix={suffix}
-        formatter={formatter}
-        valueStyle={{ fontSize: 'clamp(1.1rem, 2.2vw, 1.5rem)' }}
-      />
+      <div className="flex gap-3 items-start min-w-0">
+        {prefix ? (
+          <span className={`shrink-0 text-lg leading-none mt-0.5 ${iconClass}`} aria-hidden>
+            {prefix}
+          </span>
+        ) : null}
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-1.5 leading-tight">
+            {title}
+          </div>
+          <div className="text-xl font-semibold tabular-nums text-[var(--text-primary)] leading-snug tracking-tight">
+            {displayValue}
+            {suffix ? <span className="text-base font-medium text-[var(--text-secondary)] ml-0.5">{suffix}</span> : null}
+          </div>
+        </div>
+      </div>
     </Card>
   )
 }

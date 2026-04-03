@@ -168,8 +168,8 @@ export function ProjectCreate() {
           <Form.Item name="riskLevel" label="Risk Level">
             <Select options={riskOptions} placeholder="Select risk level" allowClear />
           </Form.Item>
-          <Form.Item name="budget" label="Budget ($)">
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="Enter budget (allocated to cost categories when using template)" />
+          <Form.Item name="budget" label="Estimated cost ($)">
+            <InputNumber min={0} style={{ width: '100%' }} placeholder="Estimated cost (spread across CBS when using a template)" />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={isPending}>

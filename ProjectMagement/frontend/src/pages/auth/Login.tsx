@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Form, Input, Button, Card, message, Tooltip } from 'antd'
 import { UserOutlined, LockOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import { useAuth } from '../../context/AuthContext'
+import { getDefaultLandingPath } from '../../utils/permissions'
+import type { UserRole } from '../../types'
 
 export function Login() {
   const [loading, setLoading] = useState(false)
@@ -12,9 +14,9 @@ export function Login() {
   const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true)
     try {
-      await login(values.email, values.password)
+      const user = await login(values.email, values.password)
       message.success('Login successful')
-      navigate('/dashboard')
+      navigate(getDefaultLandingPath(user.role as UserRole))
     } catch {
       message.error('Invalid email or password')
     } finally {
@@ -23,13 +25,13 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--page-bg)] p-4">
+    <div className="min-h-screen min-h-[100dvh] flex items-center justify-center bg-[var(--page-bg)] px-4 py-6 pt-[max(1.5rem,env(safe-area-inset-top,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]">
       <div className="absolute inset-0 bg-[linear-gradient(180deg,var(--surface-muted)_0%,var(--page-bg)_100%)] -z-10" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(37,99,235,0.15),transparent)] -z-10" />
       <Card
-        className="w-full max-w-[400px] rounded-2xl border border-[var(--border)] shadow-xl"
+        className="w-full max-w-[400px] rounded-2xl border border-[var(--border)] shadow-xl mx-auto"
         styles={{
-          body: { padding: '32px 40px' },
+          body: { padding: 'clamp(1.25rem, 4vw, 2rem) clamp(1rem, 4vw, 2.5rem)' },
         }}
       >
         <div className="text-center mb-8">

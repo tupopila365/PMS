@@ -1,7 +1,20 @@
 import axios from 'axios'
 
-/** Base URL for REST calls: absolute (e.g. http://localhost:8081/api) uses CORS; relative /api uses Vite proxy in dev. */
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+/**
+ * Base URL for REST calls. Paths in this app are like `/images`, `/auth/login` (no second `/api` prefix).
+ * - Relative `/api` uses the Vite dev proxy.
+ * - If `VITE_API_URL` is `http://host:port` without `/api`, Spring routes (`/api/images/...`) would 404 — append `/api`.
+ */
+function normalizeApiBase(): string {
+  const raw = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+  if (raw === '/api') return '/api'
+  if (/^https?:\/\//i.test(raw) && !raw.endsWith('/api')) {
+    return `${raw}/api`
+  }
+  return raw
+}
+
+const API_BASE = normalizeApiBase()
 
 export const api = axios.create({
   baseURL: API_BASE,

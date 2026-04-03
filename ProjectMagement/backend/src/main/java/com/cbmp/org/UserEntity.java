@@ -16,6 +16,11 @@ public class UserEntity {
     private String companyId;
     /** BCrypt hash; null/empty treated as legacy (plain "password" allowed at login until backfilled). */
     private String passwordHash;
+    /**
+     * When set (and role is not admin/project_manager/accountant), the user only sees projects whose
+     * type field matches this value case-insensitively, within the same company.
+     */
+    private String discipline;
 
     public String getId() {
         return id;
@@ -63,5 +68,13 @@ public class UserEntity {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getDiscipline() {
+        return discipline;
+    }
+
+    public void setDiscipline(String discipline) {
+        this.discipline = discipline;
     }
 }

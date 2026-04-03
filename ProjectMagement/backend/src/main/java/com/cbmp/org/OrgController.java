@@ -39,9 +39,29 @@ public class OrgController {
     }
 
     @GetMapping("/users")
-    public List<Map<String, Object>> users(@RequestParam(required = false) String companyId) {
-        List<UserEntity> list = companyId != null && !companyId.isBlank()
-                ? userRepository.findByCompanyId(companyId)
+    public List<Map<String, Object>> users(
+            @RequestParam(required = false) String companyId,
+            @AuthenticationPrincipal JwtAuthFilter.AuthUser currentUser
+    ) {
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        boolean admin = "admin".equalsIgnoreCase(currentUser.role());
+        String jwtCompany = currentUser.companyId() != null ? currentUser.companyId().trim() : "";
+        String effectiveCompanyId;
+        if (admin) {
+            effectiveCompanyId = (companyId != null && !companyId.isBlank()) ? companyId.trim() : null;
+        } else {
+            if (jwtCompany.isEmpty()) {
+                return List.of();
+            }
+            if (companyId != null && !companyId.isBlank() && !companyId.trim().equals(jwtCompany)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot list users for another company");
+            }
+            effectiveCompanyId = jwtCompany;
+        }
+        List<UserEntity> list = effectiveCompanyId != null && !effectiveCompanyId.isBlank()
+                ? userRepository.findByCompanyId(effectiveCompanyId)
                 : userRepository.findAll();
         return list.stream().map(this::userToJson).collect(Collectors.toList());
     }
@@ -85,6 +105,7 @@ public class OrgController {
         u.setRole(role);
         u.setCompanyId(companyId);
         u.setPasswordHash(passwordEncoder.encode(pwd));
+        applyDisciplineFromBody(u, body);
         return userToJson(userRepository.save(u));
     }
 
@@ -128,6 +149,7 @@ public class OrgController {
         if (body.get("companyId") != null && !body.get("companyId").toString().isBlank()) {
             u.setCompanyId(body.get("companyId").toString().trim());
         }
+        applyDisciplineFromBody(u, body);
         return userToJson(userRepository.save(u));
     }
 
@@ -186,13 +208,31 @@ public class OrgController {
         return Map.of("id", c.getId(), "name", c.getName(), "subscriptionId", c.getSubscriptionId() != null ? c.getSubscriptionId() : "");
     }
 
+    private void applyDisciplineFromBody(UserEntity u, Map<String, Object> body) {
+        if (!body.containsKey("discipline")) {
+            return;
+        }
+        Object d = body.get("discipline");
+        if (d == null || d.toString().isBlank()) {
+            u.setDiscipline(null);
+            return;
+        }
+        String ds = d.toString().trim();
+        if (ds.length() > 64) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "discipline too long");
+        }
+        u.setDiscipline(ds);
+    }
+
     private Map<String, Object> userToJson(UserEntity u) {
+        String disc = u.getDiscipline();
         return Map.of(
                 "id", u.getId(),
                 "name", u.getName(),
                 "email", u.getEmail(),
                 "role", u.getRole(),
-                "companyId", u.getCompanyId()
+                "companyId", u.getCompanyId(),
+                "discipline", disc != null ? disc : ""
         );
     }
 

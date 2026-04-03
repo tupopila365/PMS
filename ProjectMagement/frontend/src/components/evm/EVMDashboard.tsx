@@ -24,7 +24,7 @@ export function EVMDashboard({ project, tasks, timesheetEntries, costCategories 
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} md={6}>
           <Card>
-            <Statistic title="BAC (Budget at Completion)" value={metrics.bac} prefix={<DollarOutlined />} formatter={(v) => `$${Number(v).toLocaleString()}`} />
+            <Statistic title="Estimated at completion (BAC)" value={metrics.bac} prefix={<DollarOutlined />} formatter={(v) => `$${Number(v).toLocaleString()}`} />
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>

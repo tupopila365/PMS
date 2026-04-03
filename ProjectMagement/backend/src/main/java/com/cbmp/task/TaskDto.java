@@ -17,6 +17,9 @@ public record TaskDto(
         String parentId,
         Integer order,
         Boolean isMilestone,
+        Boolean sampleRequired,
+        Boolean approvalRequired,
+        Boolean archived,
         String createdAt
 ) {
 }

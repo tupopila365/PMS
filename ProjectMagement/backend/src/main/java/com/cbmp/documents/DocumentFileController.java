@@ -1,8 +1,11 @@
 package com.cbmp.documents;
 
+import com.cbmp.auth.JwtAuthFilter;
+import com.cbmp.org.UserEntity;
 import com.cbmp.flex.AppRecordEntity;
 import com.cbmp.flex.AppRecordRepository;
 import com.cbmp.flex.FlexibleRecordService;
+import com.cbmp.project.ProjectAccessService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.FileSystemResource;
@@ -11,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -32,16 +36,19 @@ public class DocumentFileController {
     private final FlexibleRecordService flex;
     private final AppRecordRepository appRecordRepository;
     private final ObjectMapper objectMapper;
+    private final ProjectAccessService projectAccessService;
     private final Path uploadDir;
 
     public DocumentFileController(
             FlexibleRecordService flex,
             AppRecordRepository appRecordRepository,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            ProjectAccessService projectAccessService
     ) throws IOException {
         this.flex = flex;
         this.appRecordRepository = appRecordRepository;
         this.objectMapper = objectMapper;
+        this.projectAccessService = projectAccessService;
         this.uploadDir = Paths.get("uploads", "documents").toAbsolutePath().normalize();
         Files.createDirectories(this.uploadDir);
     }
@@ -51,8 +58,11 @@ public class DocumentFileController {
             @RequestPart("file") MultipartFile file,
             @RequestParam("projectId") String projectId,
             @RequestParam(value = "taskId", required = false) String taskId,
-            @RequestParam(value = "uploadedBy", required = false) String uploadedBy
+            @RequestParam(value = "uploadedBy", required = false) String uploadedBy,
+            @AuthenticationPrincipal JwtAuthFilter.AuthUser authUser
     ) throws IOException {
+        UserEntity user = projectAccessService.requireUser(authUser);
+        projectAccessService.requireAccess(user, projectId);
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "file required");
         }
@@ -86,9 +96,12 @@ public class DocumentFileController {
         body.put("version", 1);
         body.put("uploadedAt", Instant.now().toString());
         body.put("uploadedBy", uploadedBy != null ? uploadedBy : "");
+        if (authUser != null && authUser.id() != null) {
+            body.put("uploadedByUserId", authUser.id());
+        }
         body.put("filePath", "/api/documents/file/" + id);
         body.put("_diskName", diskName);
-        return flex.save("document", projectId, body);
+        return flex.save("document", projectId, body, authUser);
     }
 
     @GetMapping("/file/{id}")

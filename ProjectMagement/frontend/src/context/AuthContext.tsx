@@ -5,7 +5,7 @@ import { authService } from '../services/authService'
 interface AuthContextType {
   user: User | null
   token: string | null
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<User>
   logout: () => void
   isLoading: boolean
   isAuthenticated: boolean
@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('token', newToken)
     setToken(newToken)
     setUser(userData)
+    return userData
   }, [])
 
   const logout = useCallback(() => {

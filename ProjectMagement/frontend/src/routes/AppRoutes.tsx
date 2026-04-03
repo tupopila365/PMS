@@ -1,11 +1,14 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getDefaultLandingPath } from '../utils/permissions'
+import type { UserRole } from '../types'
 import { AppLayout } from '../components/layout/AppLayout'
 import { PageLoader } from '../components/ui/PageLoader'
 import { Login } from '../pages/auth/Login'
 import { Dashboard } from '../pages/dashboard/Dashboard'
 import { ProjectPortfolio } from '../pages/portfolio/ProjectPortfolio'
 import { ProjectPipeline } from '../pages/portfolio/ProjectPipeline'
+import { BoqCompare } from '../pages/portfolio/BoqCompare'
 import { ProjectList } from '../pages/projects/ProjectList'
 import { ProjectDetail } from '../pages/projects/ProjectDetail'
 import { ProjectCreate } from '../pages/projects/ProjectCreate'
@@ -53,13 +56,22 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+/** Post-login home: role-based (e.g. vendor → /projects, not /dashboard). */
+function DefaultLandingRedirect() {
+  const { user } = useAuth()
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+  return <Navigate to={getDefaultLandingPath(user.role as UserRole)} replace />
+}
+
 export function AppRoutes() {
   const { isAuthenticated, isLoading } = useAuth()
 
   return (
     <Routes>
       <Route path="/login" element={
-        isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+        isAuthenticated ? <DefaultLandingRedirect /> : <Login />
       } />
       <Route
         path="/"
@@ -69,10 +81,11 @@ export function AppRoutes() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route index element={<DefaultLandingRedirect />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="portfolio" element={<ProjectPortfolio />} />
         <Route path="portfolio/pipeline" element={<ProjectPipeline />} />
+        <Route path="portfolio/boq-compare" element={<BoqCompare />} />
         <Route path="projects" element={<ProjectList />} />
         <Route path="projects/new" element={<ProjectCreate />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
