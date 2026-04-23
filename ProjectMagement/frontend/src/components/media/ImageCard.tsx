@@ -103,7 +103,7 @@ export function ImageCard({ image }: ImageCardProps) {
           ? `${takenFormatted} (upload time — no camera date in file)`
           : `${takenFormatted}`
 
-  // Uploaded = server clock when the file hit CBMP
+  // Uploaded = server clock when the file was stored
   const uploaded =
     formatWhen(image.uploadedAt) ||
     (image.timestamp ? `${formatWhen(image.timestamp)} (legacy record)` : '—')

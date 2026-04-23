@@ -11,6 +11,7 @@ import { taskService } from '../../services/taskService'
 import { projectService } from '../../services/projectService'
 import type { Task } from '../../types'
 import { useProjectContext } from '../../context/ProjectContext'
+import { ALL_PROJECTS_SELECT_VALUE, projectIdFromSelect, selectValueFromProjectId } from '../../constants/projectFilter'
 import { countHiddenByDefault, filterTasksForDefaultViews } from '../../utils/taskFilters'
 
 export function GanttView() {
@@ -71,12 +72,13 @@ export function GanttView() {
               placeholder="All Projects"
               allowClear
               className="w-[200px] min-w-[160px]"
-              value={projectFilter}
+              value={selectValueFromProjectId(projectFilter)}
               onChange={(v) => {
-                setProjectFilter(v)
-                setSelectedProjectId(v)
+                const id = projectIdFromSelect(v)
+                setProjectFilter(id)
+                setSelectedProjectId(id)
               }}
-              options={[{ label: 'All Projects', value: undefined }, ...projects.map((p) => ({ label: p.name, value: p.id }))]}
+              options={[{ label: 'All Projects', value: ALL_PROJECTS_SELECT_VALUE }, ...projects.map((p) => ({ label: p.name, value: p.id }))]}
             />
             <Button icon={<UnorderedListOutlined />} onClick={() => navigate('/tasks')}>
               List

@@ -27,7 +27,9 @@ export function ScheduleAttention() {
     for (const t of tasks) {
       if (t.status === 'completed' || isTaskArchived(t)) continue
       if (t.dueDate && t.dueDate < t0) od.push(t)
-      if (t.sampleRequired || t.approvalRequired) qc.push(t)
+      const samplePending = Boolean(t.sampleRequired) && !t.sampleReceived
+      const approvalPending = Boolean(t.approvalRequired) && !t.approvalGranted
+      if (samplePending || approvalPending) qc.push(t)
     }
     od.sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''))
     return { overdue: od.slice(0, 8), qcFlags: qc.slice(0, 6) }
@@ -47,7 +49,10 @@ export function ScheduleAttention() {
       loading={isLoading}
     >
       {!hasAny && !isLoading ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No overdue tasks or QC flags in view." />
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description="No overdue tasks or open QC gates (pending sample / approval)."
+        />
       ) : (
         <div className="space-y-4">
           {overdue.length > 0 && (
@@ -75,17 +80,21 @@ export function ScheduleAttention() {
           )}
           {qcFlags.length > 0 && (
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">QC gates</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">QC gates (pending)</div>
               <List
                 size="small"
                 dataSource={qcFlags}
-                renderItem={(t) => (
-                  <List.Item className="!px-0 flex flex-wrap gap-1">
-                    <span className="text-[var(--text-primary)]">{t.title}</span>
-                    {t.sampleRequired && <Tag color="blue">Sample</Tag>}
-                    {t.approvalRequired && <Tag color="purple">Approval</Tag>}
-                  </List.Item>
-                )}
+                renderItem={(t) => {
+                  const samplePending = Boolean(t.sampleRequired) && !t.sampleReceived
+                  const approvalPending = Boolean(t.approvalRequired) && !t.approvalGranted
+                  return (
+                    <List.Item className="!px-0 flex flex-wrap gap-1">
+                      <span className="text-[var(--text-primary)]">{t.title}</span>
+                      {samplePending && <Tag color="blue">Sample pending</Tag>}
+                      {approvalPending && <Tag color="purple">Approval pending</Tag>}
+                    </List.Item>
+                  )
+                }}
               />
             </div>
           )}

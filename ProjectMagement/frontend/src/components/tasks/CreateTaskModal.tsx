@@ -40,15 +40,28 @@ export function CreateTaskModal({ open, onClose, projectId }: CreateTaskModalPro
     },
   })
 
-  const onFinish = (values: { title: string; status?: TaskStatus; assignedTo?: string[]; dueDate?: dayjs.Dayjs }) => {
+  const onFinish = (values: {
+    title: string
+    status?: TaskStatus
+    assignedTo?: string[]
+    dueDate?: dayjs.Dayjs
+    sampleRequired?: boolean
+    approvalRequired?: boolean
+    sampleReceived?: boolean
+    approvalGranted?: boolean
+  }) => {
+    const sampleRequired = values.sampleRequired ?? false
+    const approvalRequired = values.approvalRequired ?? false
     createMutation.mutate({
       projectId,
       title: values.title,
       status: values.status || 'not_started',
       assignedTo: values.assignedTo?.length ? values.assignedTo : undefined,
       dueDate: values.dueDate ? values.dueDate.format('YYYY-MM-DD') : undefined,
-      sampleRequired: values.sampleRequired ?? false,
-      approvalRequired: values.approvalRequired ?? false,
+      sampleRequired,
+      approvalRequired,
+      sampleReceived: sampleRequired ? (values.sampleReceived ?? false) : false,
+      approvalGranted: approvalRequired ? (values.approvalGranted ?? false) : false,
     })
   }
 
@@ -70,8 +83,26 @@ export function CreateTaskModal({ open, onClose, projectId }: CreateTaskModalPro
         <Form.Item name="sampleRequired" label="Sample required" valuePropName="checked" initialValue={false}>
           <Switch />
         </Form.Item>
+        <Form.Item noStyle shouldUpdate={(prev, cur) => prev?.sampleRequired !== cur?.sampleRequired}>
+          {({ getFieldValue }) =>
+            getFieldValue('sampleRequired') ? (
+              <Form.Item name="sampleReceived" label="Sample already received" valuePropName="checked" initialValue={false}>
+                <Switch />
+              </Form.Item>
+            ) : null
+          }
+        </Form.Item>
         <Form.Item name="approvalRequired" label="Approval required" valuePropName="checked" initialValue={false}>
           <Switch />
+        </Form.Item>
+        <Form.Item noStyle shouldUpdate={(prev, cur) => prev?.approvalRequired !== cur?.approvalRequired}>
+          {({ getFieldValue }) =>
+            getFieldValue('approvalRequired') ? (
+              <Form.Item name="approvalGranted" label="Approval already granted" valuePropName="checked" initialValue={false}>
+                <Switch />
+              </Form.Item>
+            ) : null
+          }
         </Form.Item>
         <Form.Item>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

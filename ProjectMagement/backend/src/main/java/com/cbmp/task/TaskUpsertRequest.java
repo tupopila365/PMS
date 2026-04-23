@@ -18,6 +18,8 @@ public record TaskUpsertRequest(
         Boolean isMilestone,
         Boolean sampleRequired,
         Boolean approvalRequired,
+        Boolean sampleReceived,
+        Boolean approvalGranted,
         Boolean archived
 ) {
 }

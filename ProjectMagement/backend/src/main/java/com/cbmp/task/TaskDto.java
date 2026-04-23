@@ -19,6 +19,8 @@ public record TaskDto(
         Boolean isMilestone,
         Boolean sampleRequired,
         Boolean approvalRequired,
+        Boolean sampleReceived,
+        Boolean approvalGranted,
         Boolean archived,
         String createdAt
 ) {

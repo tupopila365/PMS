@@ -22,13 +22,13 @@ function quadrantStyles(isDark: boolean): Record<'neutral' | 'blue' | 'amber', Q
         cell: {
           border: '1px solid var(--border)',
           padding: 16,
-          borderRadius: 8,
+          borderRadius: 0,
           backgroundColor: 'rgba(148, 163, 184, 0.12)',
         },
         chip: {
           marginTop: 8,
           padding: 8,
-          borderRadius: 4,
+          borderRadius: 0,
           background: 'var(--surface-elevated)',
           border: '1px solid var(--border)',
           color: 'var(--text-primary)',
@@ -41,13 +41,13 @@ function quadrantStyles(isDark: boolean): Record<'neutral' | 'blue' | 'amber', Q
         cell: {
           border: '1px solid rgba(59, 130, 246, 0.35)',
           padding: 16,
-          borderRadius: 8,
+          borderRadius: 0,
           backgroundColor: 'rgba(37, 99, 235, 0.14)',
         },
         chip: {
           marginTop: 8,
           padding: 8,
-          borderRadius: 4,
+          borderRadius: 0,
           background: 'var(--surface-elevated)',
           border: '1px solid rgba(59, 130, 246, 0.45)',
           color: 'var(--text-primary)',
@@ -60,13 +60,13 @@ function quadrantStyles(isDark: boolean): Record<'neutral' | 'blue' | 'amber', Q
         cell: {
           border: '1px solid rgba(234, 88, 12, 0.35)',
           padding: 16,
-          borderRadius: 8,
+          borderRadius: 0,
           backgroundColor: 'rgba(234, 88, 12, 0.12)',
         },
         chip: {
           marginTop: 8,
           padding: 8,
-          borderRadius: 4,
+          borderRadius: 0,
           background: 'var(--surface-elevated)',
           border: '1px solid rgba(234, 88, 12, 0.4)',
           color: 'var(--text-primary)',
@@ -79,12 +79,12 @@ function quadrantStyles(isDark: boolean): Record<'neutral' | 'blue' | 'amber', Q
   }
   return {
     neutral: {
-      cell: { border: '1px solid #d9d9d9', padding: 16, borderRadius: 8, backgroundColor: '#fafafa' },
+      cell: { border: '1px solid #d9d9d9', padding: 16, borderRadius: 0, backgroundColor: '#fafafa' },
       chip: {
         marginTop: 8,
         padding: 8,
         background: '#fff',
-        borderRadius: 4,
+        borderRadius: 0,
         border: '1px solid #e8e8e8',
         color: '#0f172a',
       },
@@ -93,12 +93,12 @@ function quadrantStyles(isDark: boolean): Record<'neutral' | 'blue' | 'amber', Q
       name: { color: '#0f172a' },
     },
     blue: {
-      cell: { border: '1px solid #91d5ff', padding: 16, borderRadius: 8, backgroundColor: '#e6f7ff' },
+      cell: { border: '1px solid #91d5ff', padding: 16, borderRadius: 0, backgroundColor: '#e6f7ff' },
       chip: {
         marginTop: 8,
         padding: 8,
         background: '#fff',
-        borderRadius: 4,
+        borderRadius: 0,
         border: '1px solid #91d5ff',
         color: '#0f172a',
       },
@@ -107,12 +107,12 @@ function quadrantStyles(isDark: boolean): Record<'neutral' | 'blue' | 'amber', Q
       name: { color: '#0f172a' },
     },
     amber: {
-      cell: { border: '1px solid #ffd591', padding: 16, borderRadius: 8, backgroundColor: '#fff7e6' },
+      cell: { border: '1px solid #ffd591', padding: 16, borderRadius: 0, backgroundColor: '#fff7e6' },
       chip: {
         marginTop: 8,
         padding: 8,
         background: '#fff',
-        borderRadius: 4,
+        borderRadius: 0,
         border: '1px solid #ffd591',
         color: '#0f172a',
       },
@@ -155,7 +155,7 @@ export function StakeholderMap({ stakeholders }: StakeholderMapProps) {
   )
 
   return (
-    <Card title="Stakeholder Map (Power × Interest)">
+    <Card title="Stakeholder Map (Power × Interest)" className="rounded-none shadow-none">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, minHeight: 300 }}>
         <Quadrant style={q.neutral} title="Low Power, High Interest" strategy="Keep informed">
           {stakeholders.filter((s) => s.power < 4 && s.interest >= 4).map((s) => chip(q.neutral, s))}

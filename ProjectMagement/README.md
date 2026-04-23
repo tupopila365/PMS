@@ -1,6 +1,6 @@
-# CBMP - Construction Business Management Platform
+# Exodus PM
 
-Multi-tenant construction business management platform with project lifecycle, workflow engine, geo-tagged media, and financial tracking.
+Multi-tenant construction project management platform (project lifecycle, workflows, geo-tagged media, financial tracking). Each **company** tenant sets its own **organization name** under **Admin → Company**; that name appears in the app sidebar under the product title.
 
 ## Project Structure
 

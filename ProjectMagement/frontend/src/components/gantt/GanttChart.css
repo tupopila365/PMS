@@ -448,7 +448,7 @@
 }
 
 .gantt-design-root[data-gantt-design='control-room'] .gantt-chart-toolbar .ant-btn-default {
-  border-radius: 4px !important;
+  border-radius: 0 !important;
 }
 
 .gantt-design-root[data-gantt-design='control-room'] .gantt-task-list-header {
@@ -473,13 +473,13 @@
   opacity: 0.65;
 }
 
-/* 2 — Soft: gentle gradient, rounded chrome, calm list */
+/* 2 — Soft: gentle gradient, calm list */
 .gantt-design-root[data-gantt-design='soft'] .gantt-chart-toolbar .ant-segmented {
-  border-radius: 999px !important;
+  border-radius: 0 !important;
 }
 
 .gantt-design-root[data-gantt-design='soft'] .gantt-chart-toolbar .ant-segmented-item {
-  border-radius: 999px !important;
+  border-radius: 0 !important;
 }
 
 .gantt-design-root[data-gantt-design='soft'] .gantt-chart-body {

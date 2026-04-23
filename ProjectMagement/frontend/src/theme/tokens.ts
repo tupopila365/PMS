@@ -1,5 +1,5 @@
 /**
- * Design tokens for the CBMP design system.
+ * Design tokens for the Exodus PM UI.
  */
 export const tokens = {
   colors: {
@@ -38,7 +38,8 @@ export const tokens = {
     },
   },
   spacing: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, '2xl': 48 },
-  radius: { sm: 8, md: 12, lg: 16 },
+  /** Square panels / boxes app-wide */
+  radius: { sm: 0, md: 0, lg: 0 },
   typography: {
     fontHeading: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     fontBody: "'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",

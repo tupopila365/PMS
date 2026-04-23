@@ -22,21 +22,21 @@ public class CorsConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        List<String> origins = new ArrayList<>(List.of(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://127.0.0.1:5173",
+        // Origin patterns (not fixed ports): Vite may use 5173, 5174, 5175, … if ports are busy.
+        List<String> originPatterns = new ArrayList<>(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
                 "https://project-yomqx.vercel.app"
         ));
         if (extraOrigins != null && !extraOrigins.isBlank()) {
             Arrays.stream(extraOrigins.split(","))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
-                    .forEach(origins::add);
+                    .forEach(originPatterns::add);
         }
 
         var config = new CorsConfiguration();
-        config.setAllowedOrigins(origins);
+        config.setAllowedOriginPatterns(originPatterns);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));

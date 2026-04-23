@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Spin } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { WarningOutlined, ClockCircleOutlined, DollarOutlined, FlagOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import { alertService } from '../../services/alertService'
@@ -12,23 +13,38 @@ const typeConfig = {
 export function RiskAlertsBanner() {
   const navigate = useNavigate()
   const { selectedProjectId, setSelectedProjectId } = useProjectContext()
-  const { data: alerts } = useQuery({
+  const { data: alerts, isLoading } = useQuery({
     queryKey: ['riskAlerts', selectedProjectId],
     queryFn: () => alertService.getRiskAlerts(selectedProjectId),
   })
-
-  if (!alerts?.length) return null
 
   const handleAlertClick = (projectId: string) => {
     setSelectedProjectId(projectId)
     navigate(`/risks?project=${projectId}`, { replace: true })
   }
 
+  if (isLoading) {
+    return (
+      <div className="rounded-none border border-[var(--border)] bg-[var(--surface)] px-4 py-10 flex justify-center">
+        <Spin size="small" />
+      </div>
+    )
+  }
+
+  if (!alerts?.length) {
+    return (
+      <div className="rounded-none border border-dashed border-[var(--border)] bg-[var(--surface-muted)]/40 px-4 py-8 text-center">
+        <p className="text-sm text-[var(--text-secondary)] m-0">No risk alerts for the current project filter.</p>
+        <p className="text-xs text-[var(--text-muted)] m-0 mt-2">Alerts appear when schedule, cost, or milestone rules flag a project.</p>
+      </div>
+    )
+  }
+
   const displayAlerts = alerts.slice(0, 3)
   const remainingCount = alerts.length - 3
 
   return (
-    <div className="mb-4 rounded-md border border-[var(--border)] bg-[var(--surface)] overflow-hidden max-h-[220px] flex flex-col">
+    <div className="rounded-none border border-[var(--border)] bg-[var(--surface)] overflow-hidden max-h-[220px] flex flex-col">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)] shrink-0">
         <div className="flex items-center gap-2">
           <WarningOutlined className="text-[var(--text-secondary)] text-base" />
@@ -58,15 +74,17 @@ export function RiskAlertsBanner() {
               onClick={() => handleAlertClick(alert.projectId)}
               className="w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-[var(--surface-muted)] transition-colors group"
             >
-              <Icon className="text-sm text-[var(--text-muted)] shrink-0 mt-0.5" />
+              <span className="shrink-0 mt-0.5 inline-flex h-7 w-7 items-center justify-center border border-[var(--border)] bg-[var(--surface-muted)]">
+                <Icon className="text-sm text-[var(--text-muted)]" />
+              </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-[var(--text-primary)] text-sm">{alert.projectName}</span>
-                  <span className="text-[10px] font-medium px-1.5 py-px border border-[var(--border)] rounded-sm bg-[var(--surface)] text-[var(--text-secondary)]">
+                  <span className="text-[10px] font-medium px-1.5 py-px border border-[var(--border)] rounded-none bg-[var(--surface)] text-[var(--text-secondary)]">
                     {config.label}
                   </span>
                   {alert.severity === 'high' && (
-                    <span className="text-[10px] font-medium px-1.5 py-px border border-red-800/35 dark:border-red-500/40 rounded-sm text-red-800 dark:text-red-400">
+                    <span className="text-[10px] font-medium px-1.5 py-px border border-red-800/35 dark:border-red-500/40 rounded-none text-red-800 dark:text-red-400">
                       High
                     </span>
                   )}

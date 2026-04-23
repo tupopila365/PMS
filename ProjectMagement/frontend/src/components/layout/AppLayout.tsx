@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Breadcrumb, Dropdown, Avatar, Select, Badge } from 'antd'
+import { Layout, Menu, Breadcrumb, Dropdown, Avatar, Select, Badge, Tooltip } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { projectService } from '../../services/projectService'
 import { ProjectProvider, useProjectContext } from '../../context/ProjectContext'
@@ -26,11 +26,14 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '../../context/AuthContext'
+import { companyService } from '../../services/companyService'
+import { PRODUCT_NAME, PRODUCT_MARK } from '../../constants/branding'
 import { usePermissions } from '../../hooks/usePermissions'
 import { useNotifications } from '../../context/NotificationContext'
 import { useTheme } from '../../theme/ThemeContext'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { RouteGuard } from '../auth/RouteGuard'
+import { ALL_PROJECTS_SELECT_VALUE, projectIdFromSelect, selectValueFromProjectId } from '../../constants/projectFilter'
 import { NotificationListItem } from '../notifications/NotificationListItem'
 
 const { Header, Sider, Content } = Layout
@@ -159,6 +162,12 @@ function AppLayoutInner() {
     queryKey: ['projects'],
     queryFn: projectService.getProjects,
   })
+  const companyId = user?.companyId
+  const { data: company } = useQuery({
+    queryKey: ['company', companyId],
+    queryFn: () => companyService.getCompany(companyId!),
+    enabled: Boolean(companyId),
+  })
 
   const selectedKey = location.pathname === '/' ? '/dashboard' : location.pathname
   const breadcrumbs = getBreadcrumbs(location.pathname)
@@ -194,11 +203,23 @@ function AppLayoutInner() {
         className="app-layout-sider"
       >
         <div className="flex flex-col h-full min-h-0 max-h-[100vh]">
-          <div className="app-layout-sider-brand h-16 flex items-center justify-center font-semibold text-lg shrink-0 border-b border-[var(--sider-border)] text-[#fafaf9]">
+          <div className="app-layout-sider-brand min-h-16 py-2.5 px-2 flex flex-col items-center justify-center gap-0.5 shrink-0 border-b border-[var(--sider-border)] text-[#fafaf9]">
             {collapsed ? (
-              <span className="text-sm">CBMP</span>
+              <Tooltip title={PRODUCT_NAME}>
+                <span className="text-sm font-semibold tracking-tight cursor-default">{PRODUCT_MARK}</span>
+              </Tooltip>
             ) : (
-              <span className="tracking-tight">CBMP</span>
+              <>
+                <span className="text-base font-semibold tracking-tight leading-tight text-center">{PRODUCT_NAME}</span>
+                {company?.name ? (
+                  <span
+                    className="text-[11px] font-normal leading-tight opacity-90 text-center max-w-[13rem] truncate"
+                    title={company.name}
+                  >
+                    {company.name}
+                  </span>
+                ) : null}
+              </>
             )}
           </div>
           <nav className="app-layout-sider-nav flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain sidebar-scroll" aria-label="Main navigation">
@@ -235,9 +256,9 @@ function AppLayoutInner() {
                 placeholder="Project filter"
                 allowClear
                 className="flex-1 min-w-0 sm:min-w-[160px] sm:flex-initial sm:w-[min(100%,280px)]"
-                value={selectedProjectId}
-                onChange={setSelectedProjectId}
-                options={[{ label: 'All Projects', value: undefined }, ...projects.map((p) => ({ label: p.name, value: p.id }))]}
+                value={selectValueFromProjectId(selectedProjectId)}
+                onChange={(v) => setSelectedProjectId(projectIdFromSelect(v))}
+                options={[{ label: 'All Projects', value: ALL_PROJECTS_SELECT_VALUE }, ...projects.map((p) => ({ label: p.name, value: p.id }))]}
                 popupMatchSelectWidth={false}
                 styles={{ popup: { root: { maxWidth: 'min(100vw - 24px, 320px)' } } }}
               />
@@ -275,8 +296,9 @@ function AppLayoutInner() {
               {isDark ? <SunOutlined className="text-lg" /> : <MoonOutlined className="text-lg" />}
             </button>
             <Dropdown
+              overlayClassName="notification-dropdown-root"
               dropdownRender={() => (
-                <div className="bg-[var(--surface)] rounded-xl shadow-lg w-[min(calc(100vw-1.5rem),360px)] sm:min-w-[300px] max-h-[min(70vh,400px)] overflow-auto border border-[var(--border)]">
+                <div className="notification-dropdown-panel bg-[var(--surface)] rounded-none shadow-lg w-[min(calc(100vw-1.5rem),360px)] sm:min-w-[300px] max-h-[min(70vh,400px)] overflow-auto border border-[var(--border)]">
                   <div className="p-3 border-b border-[var(--border)] flex justify-between items-center">
                     <span className="font-semibold text-[var(--text-primary)]">Notifications</span>
                     {filteredUnreadCount > 0 && (
@@ -324,8 +346,8 @@ function AppLayoutInner() {
         <Content
           className={
             isGanttPage
-              ? 'flex-1 min-h-0 flex flex-col overflow-hidden overscroll-contain m-2 p-3 sm:m-4 sm:p-4 md:m-5 md:p-5 bg-[var(--surface)] rounded-lg sm:rounded-xl border border-[var(--border)] shadow-sm min-w-0 mb-[max(0.5rem,env(safe-area-inset-bottom,0px))]'
-              : 'flex-1 min-h-0 flex flex-col overflow-hidden overscroll-contain m-2 p-3 sm:m-4 sm:p-5 md:m-6 md:p-6 bg-[var(--surface)] rounded-lg sm:rounded-xl border border-[var(--border)] shadow-sm min-w-0 mb-[max(0.5rem,env(safe-area-inset-bottom,0px))]'
+              ? 'app-page-shell flex-1 min-h-0 flex flex-col overflow-hidden overscroll-contain m-2 p-3 sm:m-4 sm:p-4 md:m-5 md:p-5 bg-[var(--surface)] rounded-none border border-[var(--border)] shadow-sm min-w-0 mb-[max(0.5rem,env(safe-area-inset-bottom,0px))]'
+              : 'app-page-shell flex-1 min-h-0 flex flex-col overflow-hidden overscroll-contain m-2 p-3 sm:m-4 sm:p-5 md:m-6 md:p-6 bg-[var(--surface)] rounded-none border border-[var(--border)] shadow-sm min-w-0 mb-[max(0.5rem,env(safe-area-inset-bottom,0px))]'
           }
         >
           <RouteGuard>

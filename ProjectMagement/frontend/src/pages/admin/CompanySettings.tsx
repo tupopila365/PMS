@@ -5,6 +5,7 @@ import { PageHeader } from '../../components/layout/PageHeader'
 import { companyService } from '../../services/companyService'
 import { useAuth } from '../../context/AuthContext'
 import { PageLoader } from '../../components/ui/PageLoader'
+import { PRODUCT_NAME } from '../../constants/branding'
 
 export function CompanySettings() {
   const [form] = Form.useForm()
@@ -41,11 +42,19 @@ export function CompanySettings() {
 
   return (
     <div>
-      <PageHeader title="Company Settings" />
+      <PageHeader
+        title="Company Settings"
+        subtitle={`Your company name is shown under ${PRODUCT_NAME} in the sidebar for everyone in your organization.`}
+      />
       <Card title="Company Profile" styles={{ body: { padding: '20px 24px' } }}>
         <Form form={form} layout="vertical" size="large" style={{ maxWidth: 400 }} onFinish={onFinish}>
-          <Form.Item label="Company Name" name="name" rules={[{ required: true, message: 'Enter company name' }]}>
-            <Input placeholder="Company name" />
+          <Form.Item
+            label="Organization / company name"
+            name="name"
+            rules={[{ required: true, message: 'Enter your organization name' }]}
+            extra="Use the legal or trading name your team recognizes (e.g. Acme Construction Ltd)."
+          >
+            <Input placeholder="e.g. Acme Construction Ltd" />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>

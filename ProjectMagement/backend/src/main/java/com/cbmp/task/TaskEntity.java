@@ -51,6 +51,12 @@ public class TaskEntity {
     /** Formal sign-off required before marking complete. */
     private Boolean approvalRequired;
 
+    /** Sample / mock-up has been received (only meaningful when {@link #sampleRequired}). */
+    private Boolean sampleReceived;
+
+    /** Approval has been obtained (only meaningful when {@link #approvalRequired}). */
+    private Boolean approvalGranted;
+
     /** Hidden from default task views; separate from workflow status (e.g. completed). */
     private Boolean archived;
 
@@ -64,6 +70,8 @@ public class TaskEntity {
         if (isMilestone == null) isMilestone = false;
         if (sampleRequired == null) sampleRequired = false;
         if (approvalRequired == null) approvalRequired = false;
+        if (sampleReceived == null) sampleReceived = false;
+        if (approvalGranted == null) approvalGranted = false;
         if (archived == null) archived = false;
     }
 
@@ -193,6 +201,22 @@ public class TaskEntity {
 
     public void setApprovalRequired(Boolean approvalRequired) {
         this.approvalRequired = approvalRequired;
+    }
+
+    public Boolean getSampleReceived() {
+        return sampleReceived;
+    }
+
+    public void setSampleReceived(Boolean sampleReceived) {
+        this.sampleReceived = sampleReceived;
+    }
+
+    public Boolean getApprovalGranted() {
+        return approvalGranted;
+    }
+
+    public void setApprovalGranted(Boolean approvalGranted) {
+        this.approvalGranted = approvalGranted;
     }
 
     public Boolean getArchived() {

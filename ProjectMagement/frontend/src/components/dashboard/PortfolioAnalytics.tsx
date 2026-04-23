@@ -14,7 +14,12 @@ const riskColors: Record<RiskLevel, string> = {
   high: '#f5222d',
 }
 
-export function PortfolioAnalytics() {
+interface PortfolioAnalyticsProps {
+  /** Card title shown in the header */
+  cardTitle?: string
+}
+
+export function PortfolioAnalytics({ cardTitle = 'Type & risk breakdown' }: PortfolioAnalyticsProps) {
   const { selectedProjectId } = useProjectContext()
   const { data: projectsAll } = useQuery({
     queryKey: ['projects'],
@@ -64,8 +69,8 @@ export function PortfolioAnalytics() {
 
   return (
     <Card
-      title="Portfolio Analytics"
-      className="rounded-md border border-[var(--border)] shadow-none"
+      title={cardTitle}
+      className="rounded-none border border-[var(--border)] shadow-none"
       styles={{
         header: {
           borderBottom: '1px solid var(--border)',

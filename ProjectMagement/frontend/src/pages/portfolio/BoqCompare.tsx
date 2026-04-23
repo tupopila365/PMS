@@ -1,10 +1,26 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { Select, Button, Table, Typography, Alert, Card } from 'antd'
+import { Select, Button, Table, Typography, Alert, Card, message } from 'antd'
+import axios from 'axios'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { projectService } from '../../services/projectService'
 import { boqService } from '../../services/projectComplianceService'
 import type { BoqCompareRow } from '../../types'
+
+function compareErrorText(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const d = err.response?.data as { message?: string; error?: string } | string | undefined
+    if (typeof d === 'string' && d.trim()) return d
+    if (d && typeof d === 'object') {
+      if (typeof d.message === 'string' && d.message.trim()) return d.message
+      if (typeof d.error === 'string' && d.error.trim()) return d.error
+    }
+    if (err.response?.status) return `Request failed (${err.response.status})`
+  }
+  if (err instanceof Error && err.message) return err.message
+  return 'Could not load comparison'
+}
 
 export function BoqCompare() {
   const [ids, setIds] = useState<string[]>([])
@@ -16,6 +32,12 @@ export function BoqCompare() {
 
   const compareMut = useMutation({
     mutationFn: () => boqService.compare(ids),
+    onSuccess: (data) => {
+      const n = data.rows?.length ?? 0
+      if (n > 0) {
+        message.success(`Compared ${n} item code${n === 1 ? '' : 's'}`)
+      }
+    },
   })
 
   const projectOptions = projects.map((p) => ({ value: p.id, label: p.name }))
@@ -89,7 +111,44 @@ export function BoqCompare() {
       </Card>
 
       {compareMut.isError && (
-        <Alert type="error" message="Could not load comparison" className="mb-4 rounded-lg" showIcon />
+        <Alert
+          type="error"
+          message="Could not load comparison"
+          description={compareErrorText(compareMut.error)}
+          className="mb-4 rounded-lg"
+          showIcon
+        />
+      )}
+
+      {compareMut.data && compareMut.data.rows.length === 0 && (
+        <Alert
+          type="info"
+          showIcon
+          className="mb-4 rounded-lg"
+          message="No BOQ lines to compare yet"
+          description={
+            <div className="text-sm space-y-2">
+              <p className="m-0">
+                Compare only includes rows that have an <Typography.Text code>itemCode</Typography.Text> (or{' '}
+                <Typography.Text code>code</Typography.Text> / <Typography.Text code>item_code</Typography.Text> in the CSV).
+                Import a BOQ CSV on each selected project&apos;s <strong>BOQ</strong> tab, then run compare again.
+              </p>
+              <ul className="m-0 pl-4 list-disc">
+                {ids.map((pid) => {
+                  const p = projects.find((x) => x.id === pid)
+                  return (
+                    <li key={pid}>
+                      <Link to={`/projects/${pid}`} className="text-[var(--color-primary)]">
+                        {p?.name ?? pid}
+                      </Link>
+                      {' — open BOQ tab → Import CSV'}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          }
+        />
       )}
 
       {compareMut.data && (
@@ -101,6 +160,12 @@ export function BoqCompare() {
             dataSource={compareMut.data.rows}
             columns={columns}
             scroll={{ x: Math.max(400, 140 + meta.length * 160) }}
+            locale={{
+              emptyText:
+                compareMut.data.rows.length === 0
+                  ? 'Import BOQ data on each project (see note above).'
+                  : 'No data',
+            }}
           />
         </div>
       )}

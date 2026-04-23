@@ -80,6 +80,10 @@ export interface Task {
   sampleRequired?: boolean
   /** Formal approval required before closing the task */
   approvalRequired?: boolean
+  /** Sample received / verified (only used when sampleRequired) */
+  sampleReceived?: boolean
+  /** Approval obtained (only used when approvalRequired) */
+  approvalGranted?: boolean
   /** Cleared from default views; use Unarchive to restore. Distinct from status (e.g. completed). */
   archived?: boolean
   createdAt?: string

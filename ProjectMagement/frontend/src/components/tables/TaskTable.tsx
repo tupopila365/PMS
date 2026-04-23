@@ -100,27 +100,75 @@ export function TaskTable({ projectId }: TaskTableProps) {
     },
     {
       title: 'Sample',
-      key: 'sampleRequired',
-      width: 88,
-      render: (_: unknown, record: Task) => (
-        <Switch
-          size="small"
-          checked={Boolean(record.sampleRequired)}
-          onChange={(checked) => updateMutation.mutate({ id: record.id, updates: { sampleRequired: checked } })}
-        />
-      ),
+      key: 'sampleQc',
+      children: [
+        {
+          title: 'Req',
+          key: 'sampleRequired',
+          width: 64,
+          render: (_: unknown, record: Task) => (
+            <Switch
+              size="small"
+              checked={Boolean(record.sampleRequired)}
+              onChange={(checked) =>
+                updateMutation.mutate({
+                  id: record.id,
+                  updates: { sampleRequired: checked, ...(!checked ? { sampleReceived: false } : {}) },
+                })
+              }
+            />
+          ),
+        },
+        {
+          title: 'Rcvd',
+          key: 'sampleReceived',
+          width: 64,
+          render: (_: unknown, record: Task) => (
+            <Switch
+              size="small"
+              checked={Boolean(record.sampleReceived)}
+              disabled={!record.sampleRequired}
+              onChange={(checked) => updateMutation.mutate({ id: record.id, updates: { sampleReceived: checked } })}
+            />
+          ),
+        },
+      ],
     },
     {
       title: 'Approval',
-      key: 'approvalRequired',
-      width: 96,
-      render: (_: unknown, record: Task) => (
-        <Switch
-          size="small"
-          checked={Boolean(record.approvalRequired)}
-          onChange={(checked) => updateMutation.mutate({ id: record.id, updates: { approvalRequired: checked } })}
-        />
-      ),
+      key: 'approvalQc',
+      children: [
+        {
+          title: 'Req',
+          key: 'approvalRequired',
+          width: 64,
+          render: (_: unknown, record: Task) => (
+            <Switch
+              size="small"
+              checked={Boolean(record.approvalRequired)}
+              onChange={(checked) =>
+                updateMutation.mutate({
+                  id: record.id,
+                  updates: { approvalRequired: checked, ...(!checked ? { approvalGranted: false } : {}) },
+                })
+              }
+            />
+          ),
+        },
+        {
+          title: 'OK',
+          key: 'approvalGranted',
+          width: 64,
+          render: (_: unknown, record: Task) => (
+            <Switch
+              size="small"
+              checked={Boolean(record.approvalGranted)}
+              disabled={!record.approvalRequired}
+              onChange={(checked) => updateMutation.mutate({ id: record.id, updates: { approvalGranted: checked } })}
+            />
+          ),
+        },
+      ],
     },
     {
       title: 'Archive',

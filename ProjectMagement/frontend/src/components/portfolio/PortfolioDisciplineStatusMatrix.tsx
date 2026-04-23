@@ -116,7 +116,7 @@ export function PortfolioDisciplineStatusMatrix({
 
   if (loading) {
     return (
-      <Card className="rounded-xl border border-[var(--border)] shadow-none">
+      <Card className="rounded-none border border-[var(--border)] shadow-none">
         <div className="flex justify-center py-16">
           <Spin />
         </div>
@@ -126,7 +126,7 @@ export function PortfolioDisciplineStatusMatrix({
 
   if (projects.length === 0) {
     return (
-      <Card className="rounded-xl border border-[var(--border)] shadow-none">
+      <Card className="rounded-none border border-[var(--border)] shadow-none">
         <Empty description="No projects in this scope" />
       </Card>
     )
@@ -135,7 +135,7 @@ export function PortfolioDisciplineStatusMatrix({
   return (
     <Card
       title="Discipline × pipeline status"
-      className="rounded-xl border border-[var(--border)] shadow-none"
+      className="rounded-none border border-[var(--border)] shadow-none"
       styles={{
         header: {
           borderBottom: '1px solid var(--border)',
@@ -163,7 +163,7 @@ export function PortfolioDisciplineStatusMatrix({
         match the filtered set.
       </Typography.Paragraph>
 
-      <div className="overflow-x-auto rounded-lg border border-[var(--border-muted)]">
+      <div className="overflow-x-auto rounded-none border border-[var(--border-muted)]">
         <Table
           size="small"
           pagination={false}

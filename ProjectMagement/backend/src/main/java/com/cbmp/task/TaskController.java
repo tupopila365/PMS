@@ -81,7 +81,10 @@ public class TaskController {
         e.setIsMilestone(body.isMilestone());
         if (body.sampleRequired() != null) e.setSampleRequired(body.sampleRequired());
         if (body.approvalRequired() != null) e.setApprovalRequired(body.approvalRequired());
+        if (body.sampleReceived() != null) e.setSampleReceived(body.sampleReceived());
+        if (body.approvalGranted() != null) e.setApprovalGranted(body.approvalGranted());
         if (body.archived() != null) e.setArchived(body.archived());
+        normalizeQcCompletionFlags(e);
         TaskEntity saved = taskRepository.save(e);
         String projectName = projectRepository.findById(saved.getProjectId()).map(ProjectEntity::getName).orElse("Project");
         assignmentNotifier.notifyNewAssignees(
@@ -117,7 +120,14 @@ public class TaskController {
         if (body.isMilestone() != null) e.setIsMilestone(body.isMilestone());
         if (body.sampleRequired() != null) e.setSampleRequired(body.sampleRequired());
         if (body.approvalRequired() != null) e.setApprovalRequired(body.approvalRequired());
+        if (body.sampleReceived() != null) {
+            e.setSampleReceived(Boolean.TRUE.equals(e.getSampleRequired()) && body.sampleReceived());
+        }
+        if (body.approvalGranted() != null) {
+            e.setApprovalGranted(Boolean.TRUE.equals(e.getApprovalRequired()) && body.approvalGranted());
+        }
         if (body.archived() != null) e.setArchived(body.archived());
+        normalizeQcCompletionFlags(e);
         TaskEntity saved = taskRepository.save(e);
         if (body.assignedTo() != null) {
             String projectName = projectRepository.findById(saved.getProjectId()).map(ProjectEntity::getName).orElse("Project");
@@ -133,6 +143,16 @@ public class TaskController {
             );
         }
         return toDto(saved);
+    }
+
+    /** Clears completion flags when the corresponding requirement is off. */
+    private static void normalizeQcCompletionFlags(TaskEntity e) {
+        if (!Boolean.TRUE.equals(e.getSampleRequired())) {
+            e.setSampleReceived(false);
+        }
+        if (!Boolean.TRUE.equals(e.getApprovalRequired())) {
+            e.setApprovalGranted(false);
+        }
     }
 
     private static String assignerLabel(JwtAuthFilter.AuthUser authUser) {
@@ -166,6 +186,8 @@ public class TaskController {
                 e.getIsMilestone(),
                 e.getSampleRequired() != null ? e.getSampleRequired() : false,
                 e.getApprovalRequired() != null ? e.getApprovalRequired() : false,
+                e.getSampleReceived() != null ? e.getSampleReceived() : false,
+                e.getApprovalGranted() != null ? e.getApprovalGranted() : false,
                 e.getArchived() != null ? e.getArchived() : false,
                 e.getCreatedAt() != null ? e.getCreatedAt().toString() : null
         );
